@@ -37,3 +37,5 @@ next-env.d.ts
 
 # Large pi dataset - too big for GitHub
 public/pi-1b.txt
+# Keep smaller version for deployment
+!public/pi-100m.txt

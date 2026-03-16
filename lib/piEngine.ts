@@ -17,8 +17,8 @@ interface PiChunk {
 class PiEngine {
   private chunks: Map<number, PiChunk> = new Map();
   private readonly CHUNK_SIZE = 5_000_000; // 5MB chunks for efficient loading
-  private readonly TOTAL_DIGITS = 1_000_000_000; // 1 billion digits
-  private readonly SEARCH_CHUNK_SIZE = 50_000_000; // 50MB chunks for searching
+  private readonly TOTAL_DIGITS = 100_000_000; // 100 million digits for deployment
+  private readonly SEARCH_CHUNK_SIZE = 10_000_000; // 10MB chunks for searching
   private loadingPromises: Map<number, Promise<string>> = new Map();
 
   // Get the chunk index for a given position
@@ -54,7 +54,7 @@ class PiEngine {
     const end = Math.min(start + this.CHUNK_SIZE, this.TOTAL_DIGITS + 2); // +2 for "3."
     
     try {
-      const response = await fetch('/pi-1b.txt', {
+      const response = await fetch('/pi-100m.txt', {
         headers: {
           'Range': `bytes=${start === 0 ? 0 : start + 2}-${end + 1}` // Skip "3." for non-first chunks
         }
@@ -99,7 +99,7 @@ class PiEngine {
         console.log(`Searching chunk ${i + 1}/${totalSearchChunks} (positions ${start.toLocaleString()}-${end.toLocaleString()})`);
         
         try {
-          const response = await fetch('/pi-1b.txt', {
+          const response = await fetch('/pi-100m.txt', {
             headers: {
               'Range': `bytes=${start === 0 ? 0 : start + 2}-${end + 1}`
             }
