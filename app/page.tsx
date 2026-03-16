@@ -75,7 +75,7 @@ function PidateApp() {
             window.history.replaceState({}, '', url);
           }
         } catch (error) {
-          console.error('Failed to get today\'s position:', error);
+          console.error("Failed to get today's position:", error);
         }
       }
       
@@ -121,7 +121,7 @@ function PidateApp() {
       <div className="min-h-screen flex items-center justify-center bg-stone-50">
         <div className="text-center">
           <div className="animate-spin w-12 h-12 border-2 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Finding today's date in π...</p>
+          <p className="text-gray-600 text-lg">Finding today&apos;s date in π...</p>
         </div>
       </div>
     );
