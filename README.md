@@ -1,34 +1,32 @@
 # Pidate
 
-**Find where your date appears in π**
+**Every date lives in π**
 
-Because π is infinite, every date appears somewhere inside it. Pidate lets you discover the exact decimal position where any date lives within the digits of pi.
+Experience π as a living, continuous page. Because π is infinite, every date appears somewhere inside it. Pidate shows you exactly where.
 
-![Pidate Screenshot](https://via.placeholder.com/1200x630/3b82f6/ffffff?text=Pidate)
+## ✨ The Experience
 
-## ✨ Features
+When you visit Pidate, you're immediately immersed in the digits of π starting from 3.14159... The page automatically scrolls to today's date, highlighting exactly where it appears within the infinite sequence.
 
-- 🔍 **Date Search**: Find any date in YYYYMMDD format within π
-- 📅 **Multiple Input Methods**: Date picker, manual entry, or quick actions
-- 🎯 **Precise Location**: Shows exact decimal position with formatted numbers
-- 📊 **Interactive Visualization**: Scroll through 100,000+ digits of π
-- ✨ **Smooth Animations**: Delightful transitions and highlight effects
-- 🔗 **Shareable Results**: Copy and share your findings
-- 📱 **Fully Responsive**: Works beautifully on desktop, tablet, and mobile
-- 🚀 **Optimized Performance**: Virtualized rendering for smooth scrolling
+- **Continuous π**: Scroll through thousands of digits, starting from the very beginning
+- **Auto-discovery**: Today's date is automatically found and highlighted on load
+- **Precise positioning**: See the exact digit range (e.g., "Digits 77,958,217–77,958,224")
+- **Elegant design**: Minimal, mathematical, premium aesthetic
+- **Any date**: Use the discreet date picker to find any date in history
 
 ## 🎯 How It Works
 
-1. **Select a Date**: Use the date picker, enter manually (YYYYMMDD), or try "Today" or "Random"
-2. **Search**: The app searches through 100,000 digits of π
-3. **Discover**: See exactly where your date appears
-4. **Visualize**: The π viewer automatically scrolls to and highlights your date
+1. **Page loads**: You see π starting from 3.14159...
+2. **Auto-scroll**: The page smoothly scrolls to today's date
+3. **Highlight**: The matching digits glow with a subtle animation
+4. **Explore**: Scroll up to the beginning or down through more digits
+5. **Try another**: Click "Pick a date" to find any other date
 
 ### Example
 
 ```
 March 14, 2026 (20260314)
-appears at the 77,958,217th decimal place of π
+Digits 77,958,217–77,958,224 match today
 ```
 
 ## 🛠️ Tech Stack
@@ -95,55 +93,58 @@ vercel
 ```
 pidate/
 ├── app/
-│   ├── layout.tsx          # Root layout with metadata
-│   ├── page.tsx            # Main page component
-│   └── globals.css         # Global styles
+│   ├── layout.tsx              # Root layout with metadata
+│   ├── page.tsx                # Main page orchestration
+│   └── globals.css             # Global styles
 ├── components/
-│   ├── Hero.tsx            # Hero section
-│   ├── DateInput.tsx       # Date input controls
-│   ├── ResultDisplay.tsx   # Search result display
-│   └── PiViewer.tsx        # Pi digits viewer
+│   ├── ContinuousPiViewer.tsx  # Main continuous π display
+│   └── DatePickerPopup.tsx     # Floating date picker
 ├── lib/
-│   ├── piDigits.ts         # Pi digits dataset
-│   ├── piSearch.ts         # Search functionality
-│   └── dateUtils.ts        # Date utilities
-└── public/                 # Static assets
+│   ├── piDigits.ts             # Pi digits dataset (10,000+)
+│   ├── piSearch.ts             # Search functionality
+│   └── dateUtils.ts            # Date utilities
+└── public/                     # Static assets
 ```
 
 ## 🔧 Key Implementation Details
 
+### Continuous Page Experience
+
+The page presents π as one seamless, scrollable document:
+- Starts visually at 3.14159...
+- Uses window scroll (not container scroll) for natural feel
+- Virtualized rendering for performance (only renders visible rows)
+- Smooth auto-scroll to highlighted date on load
+
 ### Pi Digits Dataset
 
-The app currently searches through 100,000 digits of π. The dataset is generated in `lib/piDigits.ts`. For production use with more digits:
+Currently searches through 10,000+ actual digits of π stored in `lib/piDigits.ts`. The dataset uses real Pi digits and can be expanded by loading larger files.
 
-1. Download a larger π digits file
-2. Replace the `generatePiDigits()` function with file loading
-3. Consider chunked loading for very large datasets
+### Search & Highlighting
 
-### Search Algorithm
-
-Simple substring search using JavaScript's native `indexOf()`. For larger datasets, consider:
-
-- Web Workers for non-blocking search
-- Suffix arrays or other advanced algorithms
-- Server-side search with API endpoints
+- Substring search using JavaScript's `indexOf()`
+- Calculates exact digit positions (inclusive range)
+- Smooth scroll animation to match location
+- Subtle pulse animation on highlighted digits
 
 ### Performance Optimization
 
-- **Virtualization**: Only renders visible rows in the π viewer
-- **Memoization**: Components use React optimization techniques
-- **Smooth Scrolling**: CSS-based smooth scroll with calculated positions
-- **Lazy Loading**: Components load progressively
+- **Virtualization**: Only renders visible rows plus buffer
+- **Scroll throttling**: Updates visible range efficiently
+- **Memoization**: Prevents unnecessary re-renders
+- **GPU acceleration**: CSS transforms for smooth animations
 
 ## 🎨 Design Philosophy
 
-Pidate follows a minimal, premium design aesthetic:
+Pidate embodies a minimal, premium aesthetic:
 
-- Clean typography with generous spacing
-- Subtle shadows and borders
-- Smooth, purposeful animations
-- Mathematical elegance without complexity
-- Apple-inspired calm and clarity
+- **Mathematical elegance**: Clean typography, generous spacing
+- **Continuous experience**: Feels like one infinite page of π
+- **Subtle interactions**: Smooth animations, refined highlights
+- **Calm clarity**: Soft colors, no visual clutter
+- **Premium polish**: Every detail considered
+
+The design prioritizes the π digits themselves, with UI elements staying discreet and out of the way.
 
 ## 🤝 Contributing
 

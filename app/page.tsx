@@ -2,16 +2,14 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Hero from '@/components/Hero';
-import DateInput from '@/components/DateInput';
-import ResultDisplay from '@/components/ResultDisplay';
-import PiViewer from '@/components/PiViewer';
+import ContinuousPiViewer from '@/components/ContinuousPiViewer';
+import DatePickerPopup from '@/components/DatePickerPopup';
 import { searchPiForDate } from '@/lib/piSearch';
-import { parseYYYYMMDD } from '@/lib/dateUtils';
+import { dateToYYYYMMDD, parseYYYYMMDD, formatDateDisplay } from '@/lib/dateUtils';
 
-interface SearchState {
+interface HighlightState {
   dateString: string;
-  date: Date;
+  displayDate: string;
   position: number;
   found: boolean;
   totalDigits: number;
@@ -19,98 +17,106 @@ interface SearchState {
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const [searchResult, setSearchResult] = useState<SearchState | null>(null);
+  const [highlight, setHighlight] = useState<HighlightState | null>(null);
+  const [scrollToPosition, setScrollToPosition] = useState<number | undefined>(undefined);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
 
   useEffect(() => {
-    // Check for date parameter in URL
+    // Check for date parameter in URL, otherwise use today
     const dateParam = searchParams.get('date');
-    if (dateParam) {
-      const date = parseYYYYMMDD(dateParam);
-      if (date) {
-        handleSearch(dateParam, date);
-      }
-    }
-  }, [searchParams]);
+    let targetDate: Date;
+    let dateString: string;
 
-  const handleSearch = (dateString: string, date: Date) => {
+    if (dateParam) {
+      const parsed = parseYYYYMMDD(dateParam);
+      if (parsed) {
+        targetDate = parsed;
+        dateString = dateParam;
+      } else {
+        targetDate = new Date();
+        dateString = dateToYYYYMMDD(targetDate);
+      }
+    } else {
+      targetDate = new Date();
+      dateString = dateToYYYYMMDD(targetDate);
+    }
+
+    // Search for the date
     const result = searchPiForDate(dateString);
     
-    setSearchResult({
+    setHighlight({
       dateString,
-      date,
+      displayDate: formatDateDisplay(targetDate),
       position: result.position,
       found: result.found,
       totalDigits: result.totalDigits,
     });
 
-    // Update URL without page reload
+    // Trigger scroll after a brief delay to allow rendering
+    setTimeout(() => {
+      if (result.found) {
+        setScrollToPosition(result.position);
+      }
+    }, 100);
+
+    // Update URL if not already set
+    if (!dateParam) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('date', dateString);
+      window.history.replaceState({}, '', url);
+    }
+  }, [searchParams]);
+
+  const handleDateSelect = (date: Date) => {
+    const dateString = dateToYYYYMMDD(date);
+    const result = searchPiForDate(dateString);
+    
+    setHighlight({
+      dateString,
+      displayDate: formatDateDisplay(date),
+      position: result.position,
+      found: result.found,
+      totalDigits: result.totalDigits,
+    });
+
+    // Update URL
     const url = new URL(window.location.href);
     url.searchParams.set('date', dateString);
     window.history.pushState({}, '', url);
 
-    // Scroll to viewer after a brief delay
-    setTimeout(() => {
-      const viewerElement = document.getElementById('pi-viewer');
-      if (viewerElement) {
-        viewerElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 500);
+    // Trigger scroll
+    if (result.found) {
+      setScrollToPosition(result.position);
+    }
+
+    setIsPopupOpen(false);
   };
 
   return (
-    <main className="min-h-screen py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <Hero />
-        <DateInput onSearch={handleSearch} />
-        
-        {searchResult && (
-          <>
-            <ResultDisplay
-              dateString={searchResult.dateString}
-              date={searchResult.date}
-              position={searchResult.position}
-              found={searchResult.found}
-              totalDigits={searchResult.totalDigits}
-            />
-            
-            <div id="pi-viewer" className="scroll-mt-8">
-              <PiViewer
-                highlightStart={searchResult.found ? searchResult.position : undefined}
-                highlightLength={8}
-                scrollToPosition={searchResult.found ? searchResult.position : undefined}
-              />
-            </div>
-          </>
-        )}
-
-        {!searchResult && (
-          <div id="pi-viewer">
-            <PiViewer />
-          </div>
-        )}
-
-        <footer className="mt-16 text-center text-gray-500 text-sm">
-          <p className="mb-2">
-            Built with Next.js, TypeScript, and Tailwind CSS
-          </p>
-          <p>
-            Searching through {(10000).toLocaleString()}+ digits of π
-          </p>
-        </footer>
-      </div>
-    </main>
+    <>
+      <ContinuousPiViewer
+        highlightStart={highlight?.found ? highlight.position : undefined}
+        highlightLength={8}
+        scrollToPosition={scrollToPosition}
+        highlightInfo={highlight}
+      />
+      
+      <DatePickerPopup
+        isOpen={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        onDateSelect={handleDateSelect}
+        onToggle={() => setIsPopupOpen(!isPopupOpen)}
+      />
+    </>
   );
 }
 
 export default function Home() {
   return (
     <Suspense fallback={
-      <main className="min-h-screen py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <Hero />
-          <div className="text-center text-gray-500">Loading...</div>
-        </div>
-      </main>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500">Loading π...</div>
+      </div>
     }>
       <HomeContent />
     </Suspense>

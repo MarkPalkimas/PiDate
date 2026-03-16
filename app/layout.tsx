@@ -5,12 +5,12 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Pidate - Find your date in π",
-  description: "Because π is infinite, every date appears somewhere inside it. Discover where your date lives in the digits of pi.",
-  keywords: ["pi", "date", "mathematics", "visualization"],
+  title: "Pidate - Every date lives in π",
+  description: "Experience π as a continuous page. Watch as today's date appears naturally within the infinite digits of pi.",
+  keywords: ["pi", "date", "mathematics", "visualization", "interactive"],
   openGraph: {
-    title: "Pidate - Find your date in π",
-    description: "Because π is infinite, every date appears somewhere inside it.",
+    title: "Pidate - Every date lives in π",
+    description: "Experience π as a continuous page. Watch as today's date appears naturally within the infinite digits of pi.",
     type: "website",
   },
 };
