@@ -1,7 +1,7 @@
 import { format, isValid, parse } from 'date-fns';
 
-export function dateToYYYYMMDD(date: Date): string {
-  return format(date, 'yyyyMMdd');
+export function dateToMMDDYYYY(date: Date): string {
+  return format(date, 'MMddyyyy');
 }
 
 export function formatDateDisplay(date: Date): string {
@@ -13,9 +13,9 @@ export function validateDateString(dateString: string): boolean {
     return false;
   }
   
-  const year = parseInt(dateString.substring(0, 4));
-  const month = parseInt(dateString.substring(4, 6));
-  const day = parseInt(dateString.substring(6, 8));
+  const month = parseInt(dateString.substring(0, 2));
+  const day = parseInt(dateString.substring(2, 4));
+  const year = parseInt(dateString.substring(4, 8));
   
   if (year < 1000 || year > 9999) return false;
   if (month < 1 || month > 12) return false;
@@ -28,14 +28,14 @@ export function validateDateString(dateString: string): boolean {
          date.getDate() === day;
 }
 
-export function parseYYYYMMDD(dateString: string): Date | null {
+export function parseMMDDYYYY(dateString: string): Date | null {
   if (!validateDateString(dateString)) {
     return null;
   }
   
-  const year = parseInt(dateString.substring(0, 4));
-  const month = parseInt(dateString.substring(4, 6));
-  const day = parseInt(dateString.substring(6, 8));
+  const month = parseInt(dateString.substring(0, 2));
+  const day = parseInt(dateString.substring(2, 4));
+  const year = parseInt(dateString.substring(4, 8));
   
   return new Date(year, month - 1, day);
 }

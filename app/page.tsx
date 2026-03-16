@@ -6,7 +6,7 @@ import PiViewer from '@/components/PiViewer';
 import DateControl from '@/components/DateControl';
 import DateIndicator from '@/components/DateIndicator';
 import { piEngine } from '@/lib/piEngine';
-import { dateToYYYYMMDD, parseYYYYMMDD, formatDateDisplay } from '@/lib/dateUtils';
+import { dateToMMDDYYYY, parseMMDDYYYY, formatDateDisplay } from '@/lib/dateUtils';
 
 interface DateResult {
   dateString: string;
@@ -28,12 +28,12 @@ function PidateApp() {
       let targetDate: Date;
       let dateString: string;
 
-      if (dateParam && parseYYYYMMDD(dateParam)) {
-        targetDate = parseYYYYMMDD(dateParam)!;
+      if (dateParam && parseMMDDYYYY(dateParam)) {
+        targetDate = parseMMDDYYYY(dateParam)!;
         dateString = dateParam;
       } else {
         targetDate = new Date();
-        dateString = dateToYYYYMMDD(targetDate);
+        dateString = dateToMMDDYYYY(targetDate);
       }
 
       setIsSearching(true);
@@ -67,7 +67,7 @@ function PidateApp() {
   }, [searchParams]);
 
   const handleDateSelect = async (date: Date) => {
-    const dateString = dateToYYYYMMDD(date);
+    const dateString = dateToMMDDYYYY(date);
     setIsSearching(true);
 
     try {

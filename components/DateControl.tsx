@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { dateToYYYYMMDD, validateDateString, getRandomDate } from '@/lib/dateUtils';
+import { dateToMMDDYYYY, validateDateString, getRandomDate } from '@/lib/dateUtils';
 
 interface DateControlProps {
   onDateSelect: (date: Date) => void;
@@ -28,14 +28,13 @@ export default function DateControl({ onDateSelect }: DateControlProps) {
   const handleManualInput = () => {
     const dateString = manualInput.trim();
     if (!validateDateString(dateString)) {
-      setError('Invalid date format (use YYYYMMDD)');
+      setError('Invalid date format (use MMDDYYYY)');
       return;
     }
-    const date = new Date(
-      parseInt(dateString.substring(0, 4)),
-      parseInt(dateString.substring(4, 6)) - 1,
-      parseInt(dateString.substring(6, 8))
-    );
+    const month = parseInt(dateString.substring(0, 2));
+    const day = parseInt(dateString.substring(2, 4));
+    const year = parseInt(dateString.substring(4, 8));
+    const date = new Date(year, month - 1, day);
     setError('');
     onDateSelect(date);
     setIsOpen(false);
@@ -145,7 +144,7 @@ export default function DateControl({ onDateSelect }: DateControlProps) {
                 {/* Manual Input */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Enter YYYYMMDD
+                    Enter MMDDYYYY
                   </label>
                   <div className="flex gap-3">
                     <input
@@ -155,7 +154,7 @@ export default function DateControl({ onDateSelect }: DateControlProps) {
                         setManualInput(e.target.value);
                         setError('');
                       }}
-                      placeholder="20260315"
+                      placeholder="03152026"
                       maxLength={8}
                       className="flex-1 px-4 py-3 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition font-mono"
                     />

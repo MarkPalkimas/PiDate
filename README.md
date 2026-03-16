@@ -6,7 +6,7 @@ Experience π as a continuous mathematical landscape where every date lives some
 
 ## ✨ Features
 
-- 🔍 **Search any date** - Find where YYYYMMDD appears in π
+- 🔍 **Search any date** - Find where MMDDYYYY appears in π
 - 📜 **Continuous scrolling** - Explore π as an infinite mathematical landscape  
 - 🎯 **Auto-scroll to today** - Page loads showing today's date in π
 - 📱 **Mobile responsive** - Beautiful experience on all devices
@@ -28,7 +28,7 @@ Experience π as a continuous mathematical landscape where every date lives some
 
 ## 🎯 How It Works
 
-Because π is infinite and non-repeating, any finite sequence of digits appears somewhere within it. This means every date formatted as YYYYMMDD exists somewhere in π's decimal expansion.
+Because π is infinite and non-repeating, any finite sequence of digits appears somewhere within it. This means every date formatted as MMDDYYYY exists somewhere in π's decimal expansion.
 
 Pidate uses efficient chunked loading to search through 100 million digits of π, providing coverage for virtually any date while maintaining smooth performance.
 
