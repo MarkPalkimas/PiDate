@@ -2,12 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import ContinuousPiViewer from '@/components/ContinuousPiViewer';
-import DatePickerPopup from '@/components/DatePickerPopup';
-import { searchPiForDate } from '@/lib/piSearch';
+import PiViewer from '@/components/PiViewer';
+import DateControl from '@/components/DateControl';
+import DateIndicator from '@/components/DateIndicator';
+import { piEngine } from '@/lib/piEngine';
 import { dateToYYYYMMDD, parseYYYYMMDD, formatDateDisplay } from '@/lib/dateUtils';
 
-interface HighlightState {
+interface DateResult {
   dateString: string;
   displayDate: string;
   position: number;
@@ -15,64 +16,64 @@ interface HighlightState {
   totalDigits: number;
 }
 
-function HomeContent() {
+function PidateApp() {
   const searchParams = useSearchParams();
-  const [highlight, setHighlight] = useState<HighlightState | null>(null);
-  const [scrollToPosition, setScrollToPosition] = useState<number | undefined>(undefined);
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [dateResult, setDateResult] = useState<DateResult | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
-    // Check for date parameter in URL, otherwise use today
-    const dateParam = searchParams.get('date');
-    let targetDate: Date;
-    let dateString: string;
+    const initializeApp = async () => {
+      // Get date from URL or use today
+      const dateParam = searchParams.get('date');
+      let targetDate: Date;
+      let dateString: string;
 
-    if (dateParam) {
-      const parsed = parseYYYYMMDD(dateParam);
-      if (parsed) {
-        targetDate = parsed;
+      if (dateParam && parseYYYYMMDD(dateParam)) {
+        targetDate = parseYYYYMMDD(dateParam)!;
         dateString = dateParam;
       } else {
         targetDate = new Date();
         dateString = dateToYYYYMMDD(targetDate);
       }
-    } else {
-      targetDate = new Date();
-      dateString = dateToYYYYMMDD(targetDate);
-    }
 
-    // Search for the date (async)
-    searchPiForDate(dateString).then((result) => {
-      setHighlight({
-        dateString,
-        displayDate: formatDateDisplay(targetDate),
-        position: result.position,
-        found: result.found,
-        totalDigits: result.totalDigits,
-      });
+      setIsSearching(true);
 
-      // Trigger scroll after a brief delay to allow rendering
-      setTimeout(() => {
-        if (result.found) {
-          setScrollToPosition(result.position);
+      try {
+        // Search for the date in Pi
+        const result = await piEngine.searchForDate(dateString);
+        
+        setDateResult({
+          dateString,
+          displayDate: formatDateDisplay(targetDate),
+          position: result.position,
+          found: result.found,
+          totalDigits: result.totalDigits,
+        });
+
+        // Update URL if needed
+        if (!dateParam) {
+          const url = new URL(window.location.href);
+          url.searchParams.set('date', dateString);
+          window.history.replaceState({}, '', url);
         }
-      }, 100);
-    });
+      } catch (error) {
+        console.error('Failed to search for date:', error);
+      } finally {
+        setIsSearching(false);
+      }
+    };
 
-    // Update URL if not already set
-    if (!dateParam) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('date', dateString);
-      window.history.replaceState({}, '', url);
-    }
+    initializeApp();
   }, [searchParams]);
 
-  const handleDateSelect = (date: Date) => {
+  const handleDateSelect = async (date: Date) => {
     const dateString = dateToYYYYMMDD(date);
-    
-    // Search asynchronously
-    searchPiForDate(dateString).then((result) => {
-      setHighlight({
+    setIsSearching(true);
+
+    try {
+      const result = await piEngine.searchForDate(dateString);
+      
+      setDateResult({
         dateString,
         displayDate: formatDateDisplay(date),
         position: result.position,
@@ -84,31 +85,43 @@ function HomeContent() {
       const url = new URL(window.location.href);
       url.searchParams.set('date', dateString);
       window.history.pushState({}, '', url);
-
-      // Trigger scroll
-      if (result.found) {
-        setScrollToPosition(result.position);
-      }
-    });
-
-    setIsPopupOpen(false);
+    } catch (error) {
+      console.error('Failed to search for date:', error);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   return (
     <>
-      <ContinuousPiViewer
-        highlightStart={highlight?.found ? highlight.position : undefined}
+      <PiViewer
+        targetPosition={dateResult?.found ? dateResult.position : undefined}
+        highlightStart={dateResult?.found ? dateResult.position : undefined}
         highlightLength={8}
-        scrollToPosition={scrollToPosition}
-        highlightInfo={highlight}
       />
       
-      <DatePickerPopup
-        isOpen={isPopupOpen}
-        onClose={() => setIsPopupOpen(false)}
-        onDateSelect={handleDateSelect}
-        onToggle={() => setIsPopupOpen(!isPopupOpen)}
-      />
+      <DateControl onDateSelect={handleDateSelect} />
+      
+      {dateResult && !isSearching && (
+        <DateIndicator
+          dateString={dateResult.dateString}
+          displayDate={dateResult.displayDate}
+          position={dateResult.position}
+          found={dateResult.found}
+          totalDigits={dateResult.totalDigits}
+        />
+      )}
+
+      {isSearching && (
+        <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 px-8 py-6">
+            <div className="text-center">
+              <div className="animate-spin w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-gray-600">Searching through π...</p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -116,11 +129,14 @@ function HomeContent() {
 export default function Home() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Loading π...</div>
+      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+        <div className="text-center">
+          <div className="animate-spin w-12 h-12 border-2 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading Pidate...</p>
+        </div>
       </div>
     }>
-      <HomeContent />
+      <PidateApp />
     </Suspense>
   );
 }
