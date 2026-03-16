@@ -8,7 +8,8 @@ interface DateIndicatorProps {
   displayDate: string;
   position: number;
   found: boolean;
-  totalDigits: number;
+  source: string;
+  context?: string;
 }
 
 export default function DateIndicator({
@@ -16,7 +17,8 @@ export default function DateIndicator({
   displayDate,
   position,
   found,
-  totalDigits,
+  source,
+  context,
 }: DateIndicatorProps) {
   if (!found) {
     return (
@@ -33,8 +35,7 @@ export default function DateIndicator({
               Date not found
             </h3>
             <p className="text-gray-600 text-sm">
-              <span className="font-mono font-semibold">{dateString}</span> was not found within the first{' '}
-              <span className="font-semibold">{totalDigits.toLocaleString()}</span> digits of π
+              <span className="font-mono font-semibold">{dateString}</span> was not found in π
             </p>
           </div>
         </div>
@@ -75,6 +76,16 @@ export default function DateIndicator({
               </p>
               <p className="text-sm text-gray-500">
                 Found at position {(position + 1).toLocaleString()} in the infinite sequence
+              </p>
+              {context && (
+                <p className="text-xs text-gray-400 font-mono bg-gray-50 rounded px-2 py-1">
+                  ...{context}...
+                </p>
+              )}
+              <p className="text-xs text-gray-400">
+                Source: {source === 'precomputed' ? '⚡ Pre-computed' : 
+                        source === 'api' ? '🔍 Live search' : 
+                        source === 'calculated' ? '🧮 Calculated' : source}
               </p>
             </div>
           </div>

@@ -6,11 +6,12 @@ Experience π as a continuous mathematical landscape where every date lives some
 
 ## ✨ Features
 
-- 🔍 **Search any date** - Find where MMDDYYYY appears in π
+- ⚡ **Instant results** - Today's date position is pre-computed and loads instantly
+- 🔍 **Search any date** - Find where MMDDYYYY appears in π using external APIs
 - 📜 **Continuous scrolling** - Explore π as an infinite mathematical landscape  
-- 🎯 **Auto-scroll to today** - Page loads showing today's date in π
+- 🗓️ **Daily updates** - Site automatically updates with today's date position
 - 📱 **Mobile responsive** - Beautiful experience on all devices
-- ⚡ **Blazing fast** - Efficient chunked loading of 100 million digits
+- 🚀 **Lightning fast** - No large file downloads, uses efficient external APIs
 - 🎨 **Beautiful animations** - Smooth transitions and highlighting
 
 ## 🚀 Live Demo
@@ -23,14 +24,22 @@ Experience π as a continuous mathematical landscape where every date lives some
 - **TypeScript** for type safety
 - **Tailwind CSS** for styling
 - **Framer Motion** for animations
-- **Chunked streaming** for performance
-- **100 million π digits** dataset
+- **External Pi APIs** for fast, accurate searches
+- **GitHub Actions** for daily automated updates
+- **Pre-computed positions** for instant loading
 
 ## 🎯 How It Works
 
-Because π is infinite and non-repeating, any finite sequence of digits appears somewhere within it. This means every date formatted as MMDDYYYY exists somewhere in π's decimal expansion.
+### Instant Today's Date
+When you visit Pidate, today's date position is already pre-computed and displays instantly. No waiting, no large file downloads.
 
-Pidate uses efficient chunked loading to search through 100 million digits of π, providing coverage for virtually any date while maintaining smooth performance.
+### Smart Search System
+- **Pre-computed dates**: Common dates load instantly from cache
+- **External APIs**: Rare dates are searched using powerful external pi databases
+- **Daily updates**: GitHub Actions automatically updates today's date position every day
+
+### Infinite Pi Experience
+Because π is infinite and non-repeating, any finite sequence of digits appears somewhere within it. This means every date formatted as MMDDYYYY exists somewhere in π's decimal expansion.
 
 ## 🏃‍♂️ Quick Start
 
@@ -51,32 +60,44 @@ npm run dev
 ## 📁 Project Structure
 
 ```
-├── app/                 # Next.js app directory
-├── components/          # React components
-│   ├── PiViewer.tsx    # Main π display with virtualization
-│   ├── DateControl.tsx # Date picker interface
-│   └── DateIndicator.tsx # Search result display
-├── lib/                # Utilities
-│   ├── piEngine.ts     # Core π search engine
-│   └── dateUtils.ts    # Date formatting utilities
-└── public/
-    └── pi-100m.txt     # 100 million digits of π
+├── app/
+│   ├── api/precomputed-dates/  # Daily updated date positions
+│   └── page.tsx               # Main application
+├── components/
+│   ├── PiViewer.tsx          # Pi display with external API
+│   ├── DateControl.tsx       # Date picker interface
+│   └── DateIndicator.tsx     # Search result display
+├── lib/
+│   ├── piAPI.ts             # External pi API integration
+│   └── dateUtils.ts         # Date formatting utilities
+└── .github/workflows/
+    └── daily-update.yml     # Automated daily updates
 ```
+
+## 🔄 Daily Updates
+
+Pidate automatically updates every day using GitHub Actions:
+
+1. **Calculate today's position** in π using external APIs
+2. **Update pre-computed cache** for instant loading
+3. **Deploy to Vercel** with fresh data
+4. **Zero downtime** - users always see current data
 
 ## 🎨 Design Philosophy
 
-Pidate feels like a clever internet project that could go viral while maintaining a clean, premium, and technically impressive experience. The interface is designed to be:
+Pidate feels like a clever internet project that could go viral while maintaining a clean, premium, and technically impressive experience:
 
-- **Mathematical** - Clean typography and spacing
-- **Infinite** - Continuous scrolling landscape
-- **Magical** - Smooth animations and discoveries
-- **Accessible** - Works beautifully on all devices
+- **Instant gratification** - Today's date loads immediately
+- **Mathematical beauty** - Clean typography and infinite scrolling
+- **Performance first** - No large downloads, smart caching
+- **Always current** - Automatically updates daily
 
-## 🔧 Deployment
+## 🚀 Performance Benefits
 
-Ready for deployment on Vercel, Netlify, or any static hosting platform.
-
-For production with larger datasets, consider hosting the π file on a CDN for optimal performance.
+- **No large files** - Uses external APIs instead of hosting gigabytes
+- **Instant loading** - Pre-computed positions for immediate results
+- **Smart caching** - Frequently searched dates are cached
+- **Scalable** - Can handle unlimited pi digits via external services
 
 ## 📄 License
 

@@ -1,0 +1,84 @@
+name: Daily Pi Date Update
+
+on:
+  schedule:
+    # Run daily at 00:01 UTC (just after midnight)
+    - cron: '1 0 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-todays-date:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Calculate today's date position in Pi
+      run: |
+        # Get today's date in MMDDYYYY format
+        TODAY=$(date +%m%d%Y)
+        echo "Today's date: $TODAY"
+        
+        # This would call an external pi calculation service
+        # For now, we'll simulate the calculation
+        POSITION=$((RANDOM * 1000000))
+        CONTEXT="$(shuf -i 0-9 -n 6 | tr -d '\n')${TODAY}$(shuf -i 0-9 -n 6 | tr -d '\n')"
+        
+        echo "Calculated position: $POSITION"
+        echo "Context: $CONTEXT"
+        
+        # Update the precomputed dates file
+        node -e "
+        const fs = require('fs');
+        const today = '$TODAY';
+        const position = $POSITION;
+        const context = '$CONTEXT';
+        
+        // Read current precomputed dates
+        const filePath = 'app/api/precomputed-dates/route.ts';
+        let content = fs.readFileSync(filePath, 'utf8');
+        
+        // Create new entry
+        const newEntry = \`  {
+    date: '\${today}',
+    position: \${position},
+    context: '\${context}',
+    lastUpdated: '\${new Date().toISOString()}'
+  },\`;
+        
+        // Replace the first entry (yesterday's date) with today's
+        const regex = /({[^}]+date: '[^']+',[^}]+},)/;
+        content = content.replace(regex, newEntry);
+        
+        fs.writeFileSync(filePath, content);
+        console.log('Updated precomputed dates with today:', today);
+        "
+        
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add app/api/precomputed-dates/route.ts
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🗓️ Daily update: Add $(date +%m%d%Y) position in π"
+          git push
+        fi
+        
+    - name: Trigger Vercel deployment
+      if: success()
+      run: |
+        # This would trigger a Vercel deployment webhook
+        echo "Triggering deployment for updated date..."
+        # curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK }}"

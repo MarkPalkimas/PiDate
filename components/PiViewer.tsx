@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { piEngine } from '@/lib/piEngine';
+import { piAPI } from '@/lib/piAPI';
 
 interface PiViewerProps {
   targetPosition?: number;
   highlightStart?: number;
   highlightLength?: number;
   onPositionChange?: (position: number) => void;
+  dateResult?: any; // The search result to display context
 }
 
 const DIGITS_PER_ROW = 80;
@@ -20,6 +21,7 @@ export default function PiViewer({
   highlightStart,
   highlightLength = 8,
   onPositionChange,
+  dateResult,
 }: PiViewerProps) {
   const [piSegments, setPiSegments] = useState<Map<number, string>>(new Map());
   const [visibleStart, setVisibleStart] = useState(0);
@@ -37,14 +39,8 @@ export default function PiViewer({
     }
 
     try {
-      const segment = await piEngine.getPiSegment(segmentKey * segmentSize, segmentSize);
+      const segment = await piAPI.getPiDigitsAt(segmentKey * segmentSize, segmentSize);
       setPiSegments(prev => new Map(prev).set(segmentKey, segment));
-      
-      // Preload chunks around this position for smooth scrolling
-      await piEngine.preloadAroundPosition(segmentKey * segmentSize, 2);
-      
-      // Clean up distant chunks to manage memory
-      piEngine.clearDistantChunks(segmentKey * segmentSize, 10);
     } catch (error) {
       console.error('Failed to load Pi segment:', error);
     }
@@ -54,8 +50,7 @@ export default function PiViewer({
   useEffect(() => {
     const initialize = async () => {
       try {
-        const total = await piEngine.getTotalDigits();
-        setTotalDigits(total);
+        setTotalDigits(1000000000); // Set a large number for display
         
         if (targetPosition !== undefined && !hasAutoScrolled.current) {
           // Calculate initial visible area around target
