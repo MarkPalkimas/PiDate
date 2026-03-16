@@ -41,23 +41,23 @@ function HomeContent() {
       dateString = dateToYYYYMMDD(targetDate);
     }
 
-    // Search for the date
-    const result = searchPiForDate(dateString);
-    
-    setHighlight({
-      dateString,
-      displayDate: formatDateDisplay(targetDate),
-      position: result.position,
-      found: result.found,
-      totalDigits: result.totalDigits,
-    });
+    // Search for the date (async)
+    searchPiForDate(dateString).then((result) => {
+      setHighlight({
+        dateString,
+        displayDate: formatDateDisplay(targetDate),
+        position: result.position,
+        found: result.found,
+        totalDigits: result.totalDigits,
+      });
 
-    // Trigger scroll after a brief delay to allow rendering
-    setTimeout(() => {
-      if (result.found) {
-        setScrollToPosition(result.position);
-      }
-    }, 100);
+      // Trigger scroll after a brief delay to allow rendering
+      setTimeout(() => {
+        if (result.found) {
+          setScrollToPosition(result.position);
+        }
+      }, 100);
+    });
 
     // Update URL if not already set
     if (!dateParam) {
@@ -69,25 +69,27 @@ function HomeContent() {
 
   const handleDateSelect = (date: Date) => {
     const dateString = dateToYYYYMMDD(date);
-    const result = searchPiForDate(dateString);
     
-    setHighlight({
-      dateString,
-      displayDate: formatDateDisplay(date),
-      position: result.position,
-      found: result.found,
-      totalDigits: result.totalDigits,
+    // Search asynchronously
+    searchPiForDate(dateString).then((result) => {
+      setHighlight({
+        dateString,
+        displayDate: formatDateDisplay(date),
+        position: result.position,
+        found: result.found,
+        totalDigits: result.totalDigits,
+      });
+
+      // Update URL
+      const url = new URL(window.location.href);
+      url.searchParams.set('date', dateString);
+      window.history.pushState({}, '', url);
+
+      // Trigger scroll
+      if (result.found) {
+        setScrollToPosition(result.position);
+      }
     });
-
-    // Update URL
-    const url = new URL(window.location.href);
-    url.searchParams.set('date', dateString);
-    window.history.pushState({}, '', url);
-
-    // Trigger scroll
-    if (result.found) {
-      setScrollToPosition(result.position);
-    }
 
     setIsPopupOpen(false);
   };
