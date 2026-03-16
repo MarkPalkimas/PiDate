@@ -1,8 +1,8 @@
 // Using pi-digits package which provides 1 million digits of Pi
 const piDigitsModule = require('pi-digits');
 
-// Get all available digits (up to 1 million)
-export const PI_DIGITS: string = piDigitsModule.digits;
+// Get all available digits (up to 1 million) and join into a string
+export const PI_DIGITS: string = piDigitsModule.digits.join('');
 
 export function getPiDigitsCount(): number {
   return PI_DIGITS.length;
