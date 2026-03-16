@@ -96,7 +96,7 @@ export default function ContinuousPiViewer({
             {(rowStart + 1).toLocaleString()}
           </span>
           <span className="flex-1 text-gray-700">
-            {rowDigits.split('').map((digit, idx) => {
+            {rowDigits.split('').map((digit: string, idx: number) => {
               const globalIdx = rowStart + idx;
               const isHighlighted =
                 highlightStart !== undefined &&
