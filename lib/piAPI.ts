@@ -171,13 +171,13 @@ class PiAPI {
     // Check if any precomputed dates fall within this range
     for (const [dateString, dateInfo] of this.precomputedDates) {
       const datePos = dateInfo.position;
+      // Check if the date position falls within our requested range
       if (datePos >= start && datePos < start + length) {
-        // Include the actual date at its position
-        const beforeLength = datePos - start;
-        const afterStart = datePos + dateString.length - start;
+        // Calculate where in our output the date should appear
+        const offsetInOutput = datePos - start;
         
         // Generate digits before the date
-        for (let i = 0; i < beforeLength; i++) {
+        for (let i = 0; i < offsetInOutput; i++) {
           const index = (start + i) % piStart.length;
           digits += piStart[index];
         }
@@ -186,11 +186,13 @@ class PiAPI {
         digits += dateString;
         
         // Generate remaining digits after the date
-        for (let i = afterStart; i < length; i++) {
+        const remainingStart = offsetInOutput + dateString.length;
+        for (let i = remainingStart; i < length; i++) {
           const index = (start + i) % piStart.length;
           digits += piStart[index];
         }
         
+        console.log(`Inserted date ${dateString} at position ${datePos} (offset ${offsetInOutput} in output)`);
         return digits;
       }
     }
