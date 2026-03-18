@@ -6,8 +6,7 @@
   "outputDirectory": ".next",
   "functions": {
     "app/api/search-pi/route.ts": {
-      "maxDuration": 10,
-      "memory": 1024
+      "maxDuration": 10
     }
   }
 }
