@@ -3,5 +3,11 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "functions": {
+    "app/api/search-pi/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  }
 }

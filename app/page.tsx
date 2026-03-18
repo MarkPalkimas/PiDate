@@ -1,179 +1,130 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import PiViewer from '@/components/PiViewer';
-import DateControl from '@/components/DateControl';
-import DateIndicator from '@/components/DateIndicator';
-import { piAPI } from '@/lib/piAPI';
-import { parseMMDDYYYY, formatDateDisplay } from '@/lib/dateUtils';
+import { useState, useEffect } from 'react';
 
-interface DateResult {
-  dateString: string;
-  displayDate: string;
-  position: number;
+interface SearchResult {
   found: boolean;
-  context?: string;
-  source: string;
-}
-
-function PidateApp() {
-  const searchParams = useSearchParams();
-  const [dateResult, setDateResult] = useState<DateResult | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      setIsInitialLoad(true);
-      
-      // Get date from URL or use today
-      const dateParam = searchParams.get('date');
-      let targetDate: Date;
-      let dateString: string;
-
-      if (dateParam && parseMMDDYYYY(dateParam)) {
-        targetDate = parseMMDDYYYY(dateParam)!;
-        dateString = dateParam;
-        
-        // Search for the specific date
-        setIsSearching(true);
-        try {
-          const result = await piAPI.searchDate(dateString);
-          setDateResult({
-            dateString,
-            displayDate: formatDateDisplay(targetDate),
-            position: result.position,
-            found: result.found,
-            context: result.context,
-            source: result.source,
-          });
-        } catch (error) {
-          console.error('Failed to search for date:', error);
-        } finally {
-          setIsSearching(false);
-        }
-      } else {
-        // Get today's date instantly (pre-computed)
-        try {
-          const todayResult = await piAPI.getTodaysPosition();
-          const today = new Date();
-          
-          setDateResult({
-            dateString: todayResult.dateString,
-            displayDate: formatDateDisplay(today),
-            position: todayResult.position,
-            found: todayResult.found,
-            context: todayResult.context,
-            source: todayResult.source,
-          });
-
-          // Update URL if needed
-          if (!dateParam) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('date', todayResult.dateString);
-            window.history.replaceState({}, '', url);
-          }
-        } catch (error) {
-          console.error("Failed to get today's position:", error);
-        }
-      }
-      
-      setIsInitialLoad(false);
-    };
-
-    initializeApp();
-  }, [searchParams]);
-
-  const handleDateSelect = async (date: Date) => {
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear().toString();
-    const dateString = month + day + year;
-    
-    setIsSearching(true);
-
-    try {
-      const result = await piAPI.searchDate(dateString);
-      
-      setDateResult({
-        dateString,
-        displayDate: formatDateDisplay(date),
-        position: result.position,
-        found: result.found,
-        context: result.context,
-        source: result.source,
-      });
-
-      // Update URL
-      const url = new URL(window.location.href);
-      url.searchParams.set('date', dateString);
-      window.history.pushState({}, '', url);
-    } catch (error) {
-      console.error('Failed to search for date:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  if (isInitialLoad) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-2 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Finding today&apos;s date in π...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <PiViewer
-        targetPosition={dateResult?.found ? dateResult.position : undefined}
-        highlightStart={dateResult?.found ? dateResult.position : undefined}
-        highlightLength={8}
-        dateResult={dateResult}
-      />
-      
-      <DateControl onDateSelect={handleDateSelect} />
-      
-      {dateResult && !isSearching && (
-        <DateIndicator
-          dateString={dateResult.dateString}
-          displayDate={dateResult.displayDate}
-          position={dateResult.position}
-          found={dateResult.found}
-          source={dateResult.source}
-          context={dateResult.context}
-        />
-      )}
-
-      {isSearching && (
-        <div className="fixed top-32 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200 px-8 py-6">
-            <div className="text-center">
-              <div className="animate-spin w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="text-gray-600">Searching through π...</p>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
+  dateString: string;
+  startDigit?: number;
+  endDigit?: number;
+  surroundingDigits?: string;
+  highlightStart?: number;
+  highlightLength?: number;
 }
 
 export default function Home() {
+  const [result, setResult] = useState<SearchResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Format date as YYYYMMDD
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+  };
+
+  // Search for date in pi
+  const searchDate = async (dateStr: string) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/search-pi?date=${dateStr}`);
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initialize with today's date
+  useEffect(() => {
+    const today = formatDate(new Date());
+    searchDate(today);
+  }, []);
+
+  // Handle date picker change
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const dateStr = e.target.value.replace(/-/g, '');
+    searchDate(dateStr);
+  };
+
+  // Render pi digits with highlighting
+  const renderPiDigits = () => {
+    if (!result?.found || !result.surroundingDigits) return null;
+
+    const { surroundingDigits, highlightStart = 0, highlightLength = 8 } = result;
+    const before = surroundingDigits.substring(0, highlightStart);
+    const highlighted = surroundingDigits.substring(highlightStart, highlightStart + highlightLength);
+    const after = surroundingDigits.substring(highlightStart + highlightLength);
+
+    return (
+      <div className="font-mono text-base text-gray-700 leading-relaxed">
+        <span className="text-gray-400">...</span>
+        {before}
+        <span className="bg-amber-100 text-amber-900 font-semibold px-0.5">
+          {highlighted}
+        </span>
+        {after}
+        <span className="text-gray-400">...</span>
+      </div>
+    );
+  };
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
+    <div className="min-h-screen bg-stone-50 flex items-center justify-center p-8">
+      <div className="max-w-2xl w-full space-y-8">
+        
+        {isLoading ? (
+          <div className="text-center py-12 space-y-4">
+            <div className="inline-block animate-spin w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full"></div>
+            <p className="text-sm text-gray-600">Searching 1 billion digits of π...</p>
+            <p className="text-xs text-gray-400">This may take a moment</p>
+          </div>
+        ) : result?.found ? (
+          <>
+            {/* Result Text */}
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600">
+                <span className="font-mono font-semibold">{result.dateString}</span>
+                {' '}appears at digits{' '}
+                <span className="font-mono font-semibold">{result.startDigit?.toLocaleString()}</span>
+                –
+                <span className="font-mono font-semibold">{result.endDigit?.toLocaleString()}</span>
+                {' '}of π
+              </p>
+            </div>
+
+            {/* Pi Digits Display */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              {renderPiDigits()}
+            </div>
+          </>
+        ) : (
+          <div className="text-center space-y-2">
+            <p className="text-sm text-gray-600">
+              <span className="font-mono font-semibold">{result?.dateString}</span>
+              {' '}not found in the first 1 billion digits of π
+            </p>
+            <p className="text-xs text-gray-400">Try another date</p>
+          </div>
+        )}
+
+        {/* Date Picker */}
         <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-2 border-amber-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading Pidate...</p>
+          <label className="inline-flex flex-col items-center gap-2">
+            <span className="text-xs text-gray-500">Pick a date</span>
+            <input
+              type="date"
+              onChange={handleDateChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
+              min="1000-01-01"
+              max="9999-12-31"
+            />
+          </label>
         </div>
       </div>
-    }>
-      <PidateApp />
-    </Suspense>
+    </div>
   );
 }
