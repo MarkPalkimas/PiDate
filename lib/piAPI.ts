@@ -114,29 +114,7 @@ class PiAPI {
 
   // Search using external pi API
   private async searchWithExternalAPI(dateString: string): Promise<PiSearchResult> {
-    try {
-      // Method 1: Try pi-api.com or similar service
-      const response = await fetch(`https://pi-api.com/search/${dateString}`, {
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          found: data.found,
-          position: data.position,
-          dateString,
-          context: data.context,
-          source: 'pi-api.com'
-        };
-      }
-    } catch (error) {
-      console.log('Primary API failed, trying fallback...');
-    }
-
-    // Method 2: Try alternative approach with pi calculation
+    // For now, use calculation method directly
     return await this.searchWithCalculation(dateString);
   }
 
@@ -180,18 +158,7 @@ class PiAPI {
 
   // Get pi digits around a specific position
   async getPiDigitsAt(position: number, length: number = 1000): Promise<string> {
-    try {
-      // Use external API to get pi digits at specific position
-      const response = await fetch(`https://pi-api.com/digits?start=${position}&length=${length}`);
-      if (response.ok) {
-        const data = await response.json();
-        return data.digits;
-      }
-    } catch (error) {
-      console.error('Failed to fetch pi digits:', error);
-    }
-
-    // Fallback: generate mock digits for display, but include actual found dates
+    // Generate pi-like digits for display
     return this.generateMockPiDigitsWithContext(position, length);
   }
 
