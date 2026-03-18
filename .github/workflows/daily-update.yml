@@ -39,16 +39,16 @@ jobs:
         # Update the precomputed dates file
         node -e "
         const fs = require('fs');
-        const today = '$TODAY';
-        const position = $POSITION;
-        const context = '$CONTEXT';
+        const today: string = '$TODAY';
+        const position: number = $POSITION;
+        const context: string = '$CONTEXT';
         
         // Read current precomputed dates
-        const filePath = 'app/api/precomputed-dates/route.ts';
-        let content = fs.readFileSync(filePath, 'utf8');
+        const filePath: string = 'app/api/precomputed-dates/route.ts';
+        let content: string = fs.readFileSync(filePath, 'utf8');
         
         // Create new entry
-        const newEntry = \`  {
+        const newEntry: string = \`  {
     date: '\${today}',
     position: \${position},
     context: '\${context}',
@@ -56,7 +56,7 @@ jobs:
   },\`;
         
         // Replace the first entry (yesterday's date) with today's
-        const regex = /({[^}]+date: '[^']+',[^}]+},)/;
+        const regex: RegExp = /({[^}]+date: '[^']+',[^}]+},)/;
         content = content.replace(regex, newEntry);
         
         fs.writeFileSync(filePath, content);

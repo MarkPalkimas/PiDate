@@ -39,13 +39,34 @@ export default function PiViewer({
     }
 
     try {
+      // Load pi digits from the API
       const segment = await piAPI.getPiDigitsAt(segmentKey * segmentSize, segmentSize);
       setPiSegments(prev => new Map(prev).set(segmentKey, segment));
+      
+      // If we have a target position, also preload surrounding segments
+      if (targetPosition !== undefined) {
+        const targetSegmentKey = Math.floor(targetPosition / segmentSize);
+        const preloadKeys = [targetSegmentKey - 1, targetSegmentKey, targetSegmentKey + 1];
+        
+        for (const key of preloadKeys) {
+          if (key >= 0 && key !== segmentKey && !piSegments.has(key)) {
+            try {
+              const preloadSegment = await piAPI.getPiDigitsAt(key * segmentSize, segmentSize);
+              setPiSegments(prev => new Map(prev).set(key, preloadSegment));
+            } catch (error) {
+              console.warn(`Failed to preload segment ${key}:`, error);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to load Pi segment:', error);
     }
-  }, [piSegments]);
+  }, [piSegments, targetPosition]);
 
+  // Initialize and auto-scroll to target position
+  useEffect(() => {
+    const initialize = async () => {
   // Initialize and auto-scroll to target position
   useEffect(() => {
     const initialize = async () => {
@@ -71,7 +92,7 @@ export default function PiViewer({
             hasAutoScrolled.current = true;
           }, 500);
         } else {
-          // Load initial segment from beginning
+          // Load initial segment from beginning (show pi starting from 3.14159...)
           await loadPiSegment(0);
         }
         
@@ -80,6 +101,10 @@ export default function PiViewer({
         console.error('Failed to initialize Pi viewer:', error);
         setIsLoading(false);
       }
+    };
+
+    initialize();
+  }, [targetPosition, loadPiSegment]);
     };
 
     initialize();
@@ -127,19 +152,24 @@ export default function PiViewer({
 
     const rows = [];
     const startRow = Math.floor(visibleStart / DIGITS_PER_ROW);
-    const endRow = startRow + BUFFER_ROWS * 2;
+    const endRow = startRow + BUFFER_ROWS * 4; // Show more rows
 
     for (let row = startRow; row < endRow; row++) {
       const rowStart = row * DIGITS_PER_ROW;
-      const segmentKey = Math.floor(rowStart / (BUFFER_ROWS * 2 * DIGITS_PER_ROW));
+      const segmentSize = BUFFER_ROWS * 2 * DIGITS_PER_ROW;
+      const segmentKey = Math.floor(rowStart / segmentSize);
       const segment = piSegments.get(segmentKey);
       
-      if (!segment) continue;
+      if (!segment) {
+        // Load this segment if it's not available
+        loadPiSegment(rowStart);
+        continue;
+      }
 
-      const segmentOffset = rowStart % (BUFFER_ROWS * 2 * DIGITS_PER_ROW);
+      const segmentOffset = rowStart % segmentSize;
       const rowDigits = segment.substring(segmentOffset, segmentOffset + DIGITS_PER_ROW);
 
-      if (!rowDigits) continue;
+      if (!rowDigits || rowDigits.length === 0) continue;
 
       rows.push(
         <div
