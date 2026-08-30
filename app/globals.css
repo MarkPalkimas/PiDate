@@ -2,32 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { --ink: #191714; --paper: #f3f0e8; --accent: #b9452c; }
+:root { color-scheme: dark; --background: #0c0c0e; --digits: #ebeae6; --index: #737379; --accent: #a36b4f; }
 * { box-sizing: border-box; }
-html { background: var(--paper); }
-body { margin: 0; color: var(--ink); background: var(--paper); font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+html { min-width: 0; background: var(--background); }
+body { min-width: 0; margin: 0; overflow-x: hidden; color: var(--digits); background: var(--background); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 button { font: inherit; }
 
-.pi-page, .pi-shell { width: 100%; height: 100dvh; overflow: hidden; background: var(--paper); }
-.pi-viewer-wrap { width: 100%; height: 100%; }
-.pi-viewer { width: 100%; height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: max(34px, 6vh) 16px; scrollbar-color: #8e8778 transparent; scrollbar-width: thin; }
-.pi-line { display: block; min-height: 43px; padding: 0; text-align: center; }
-.digit-index { display: none; }
-.digit-run { color: #25221d; font: clamp(16px, 2vw, 24px)/1.8 "SFMono-Regular", Consolas, "Liberation Mono", monospace; letter-spacing: .055em; white-space: nowrap; }
-.today-digit { color: #fff9ed; background: var(--accent); outline: 1px solid var(--accent); }
-.today-button { position: fixed; right: 18px; bottom: 18px; z-index: 2; border: 1px solid #bdb6a7; border-radius: 999px; padding: 8px 12px; color: #686154; background: color-mix(in srgb, var(--paper) 90%, transparent); cursor: pointer; font-size: 12px; opacity: .72; transition: color .18s, background .18s, opacity .18s; }
-.today-button:hover, .today-button:focus-visible { color: white; background: var(--ink); opacity: 1; }
-.stream-status { position: fixed; bottom: 20px; left: 18px; color: #827c70; font: 11px/1 "SFMono-Regular", Consolas, monospace; }
-.pi-loading, .pi-error { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--paper); font-family: "SFMono-Regular", Consolas, monospace; font-size: 14px; }
-.loading-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); animation: blink 1s ease-in-out infinite alternate; }
-.pi-error { flex-direction: column; padding: 30px; color: var(--accent); text-align: center; }
-.pi-error button { border: 0; border-bottom: 1px solid currentColor; color: inherit; background: none; cursor: pointer; }
-@keyframes blink { to { opacity: .2; transform: scale(.7); } }
+.pi-page { --edge-space: clamp(20px, 3.4vw, 48px); min-height: 100dvh; padding: 92px var(--edge-space) 42px; background: #0c0c0e; }
+.pi-title { position: fixed; z-index: 2; top: 0; left: 0; width: 100%; padding: 25px var(--edge-space) 20px; color: #f1f0ed; background: #0c0c0e; font-size: 15px; font-weight: 500; letter-spacing: -.015em; text-align: center; pointer-events: none; }
+.pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; }
+.digit-measure { position: absolute; visibility: hidden; contain: layout style; font: 400 clamp(17px, 1.7vw, 24px)/1.72 "SFMono-Regular", "SF Mono", "JetBrains Mono", "Roboto Mono", monospace; letter-spacing: .045em; white-space: pre; }
+.pi-line { display: grid; grid-template-columns: var(--index-gutter) minmax(0, 1fr); column-gap: var(--index-gap); min-width: 0; min-height: 42px; }
+.digit-index { padding-top: .39em; color: var(--index); font: 400 11px/1.72 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, sans-serif; letter-spacing: .01em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
+.digit-run { display: block; min-width: 0; color: var(--digits); font: 400 clamp(17px, 1.7vw, 24px)/1.72 "SFMono-Regular", "SF Mono", "JetBrains Mono", "Roboto Mono", monospace; letter-spacing: .045em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.today-digit { margin: 0 -.02em; padding: .04em .02em; color: #fffaf6; background: var(--accent); border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.today-button { position: fixed; z-index: 3; right: 20px; bottom: 18px; border: 0; border-radius: 999px; padding: 7px 10px; color: #a9a8aa; background: rgb(12 12 14 / 72%); cursor: pointer; font-size: 11px; letter-spacing: .01em; opacity: .35; transition: opacity 160ms ease, color 160ms ease; }
+.today-button:hover, .today-button:focus-visible { color: #f1f0ed; opacity: 1; outline: none; }
+.stream-status { position: fixed; z-index: 3; bottom: 21px; left: 20px; color: #77767b; font-size: 11px; }
+.pi-loading, .pi-error { display: flex; align-items: center; justify-content: center; min-height: calc(100dvh - 92px); gap: 9px; color: #aaa9ad; font-size: 13px; }
+.loading-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 900ms ease-in-out infinite alternate; }
+.pi-error { flex-direction: column; color: #c9a38e; text-align: center; }
+.pi-error button { border: 0; border-bottom: 1px solid currentColor; padding: 0; color: inherit; background: none; cursor: pointer; }
+@keyframes pulse { to { opacity: .25; transform: scale(.7); } }
 
 @media (max-width: 620px) {
-  .pi-viewer { padding-inline: 5px; }
+  .pi-page { --edge-space: 16px; padding-top: 74px; padding-bottom: 28px; }
+  .pi-title { padding-top: 20px; padding-bottom: 14px; font-size: 14px; }
+  .pi-stream { --index-gutter: 37px; --index-gap: 10px; }
+  .digit-measure, .digit-run { font-size: 14px; letter-spacing: .018em; line-height: 1.9; }
   .pi-line { min-height: 31px; }
-  .digit-run { font-size: 12px; line-height: 2.45; letter-spacing: .02em; }
+  .digit-index { padding-top: .5em; font-size: 9px; }
   .today-button { right: 10px; bottom: 10px; }
-  .stream-status { left: 11px; bottom: 16px; }
+  .stream-status { bottom: 13px; left: 12px; }
 }
