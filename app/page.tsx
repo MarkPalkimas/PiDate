@@ -212,9 +212,9 @@ export default function Home() {
     <main className="pi-page">
       <header className="pi-title">The Number π</header>
       <nav className="pi-actions" aria-label="Pi controls">
-        <button onClick={findToday}>Today</button>
-        <button onClick={() => setDialog('date')}>Go to Date</button>
-        <button onClick={() => setDialog('settings')}>Settings</button>
+        <button onClick={findToday} aria-label="Find today" title="Today"><TodayIcon /></button>
+        <button onClick={() => setDialog('date')} aria-label="Go to date" title="Go to Date"><CalendarIcon /></button>
+        <button onClick={() => setDialog('settings')} aria-label="Date settings" title="Settings"><SettingsIcon /></button>
       </nav>
       {dialog && <div className="dialog-backdrop" onMouseDown={() => setDialog(null)}>
         <section className="date-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" onMouseDown={(event) => event.stopPropagation()}>
@@ -262,6 +262,18 @@ export default function Home() {
       ) : null}
     </main>
   );
+}
+
+function TodayIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" /><path d="M12 2.75v3M12 18.25v3M2.75 12h3M18.25 12h3" /></svg>;
+}
+
+function CalendarIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14" rx="2" /><path d="M8 3.5v4M16 3.5v4M4 10h16" /></svg>;
+}
+
+function SettingsIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /><circle cx="9" cy="7" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="11" cy="17" r="1.5" /></svg>;
 }
 
 function LoadingPiStream() {

@@ -9,10 +9,13 @@ body { min-width: 0; margin: 0; overflow-x: hidden; color: var(--digits); backgr
 button { font: inherit; }
 ::selection { color: #050506; background: #e9e9ec; }
 
-.pi-page { --edge-space: clamp(24px, 3.4vw, 52px); min-height: 100dvh; padding: 94px var(--edge-space) 56px; background: var(--background); }
-.pi-title { position: fixed; z-index: 2; top: 0; left: 0; width: 100%; padding: 26px var(--edge-space) 18px; color: #f5f5f7; background: transparent; font-size: 13px; font-weight: 600; letter-spacing: -.01em; text-align: center; pointer-events: none; }
-.pi-actions { position: fixed; z-index: 4; top: 27px; right: var(--edge-space); display: flex; gap: 16px; }
-.pi-actions button, .today-button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; font-size: 11px; font-weight: 400; letter-spacing: -.01em; opacity: .5; transition: color 180ms ease, opacity 180ms ease; }
+.pi-page { --edge-space: clamp(24px, 3.4vw, 52px); min-height: 100dvh; padding: 78px var(--edge-space) 56px; background: var(--background); }
+.pi-title { position: fixed; z-index: 2; top: 0; left: 0; display: grid; width: 100%; height: 54px; place-items: center; color: #f5f5f7; background: #050506; border-bottom: 1px solid #1e1e20; font-size: 13px; font-weight: 600; letter-spacing: -.01em; pointer-events: none; }
+.pi-actions { position: fixed; z-index: 4; top: 0; right: 0; display: flex; align-items: stretch; height: 54px; padding: 0 15px; border-bottom: 1px solid #1e1e20; border-left: 1px solid #1e1e20; background: #050506; }
+.pi-actions button { display: grid; width: 28px; place-items: center; border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; opacity: .48; transition: color 180ms ease, opacity 180ms ease; }
+.pi-actions button + button { margin-left: 5px; }
+.pi-actions button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.45; }
+.today-button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; font-size: 11px; font-weight: 400; letter-spacing: -.01em; opacity: .5; transition: color 180ms ease, opacity 180ms ease; }
 .pi-actions button:hover, .pi-actions button:focus-visible, .today-button:hover, .today-button:focus-visible { color: #f5f5f7; opacity: 1; outline: none; }
 .dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 70%); animation: veil-in 220ms ease-out both; }
 .date-dialog { width: min(100%, 440px); padding: 28px; color: #f3f3f5; background: var(--surface); border: 1px solid #2a2a2e; border-radius: 20px; box-shadow: 0 30px 100px rgb(0 0 0 / 68%); animation: sheet-in 300ms cubic-bezier(.2, .8, .2, 1) both; }
@@ -66,9 +69,9 @@ button { font: inherit; }
 }
 
 @media (max-width: 620px) {
-  .pi-page { --edge-space: 16px; padding-top: 104px; padding-bottom: 28px; }
-  .pi-title { padding-top: 20px; padding-bottom: 14px; font-size: 14px; }
-  .pi-actions { top: 55px; right: var(--edge-space); gap: 12px; }
+  .pi-page { --edge-space: 16px; padding-top: 68px; padding-bottom: 28px; }
+  .pi-title { height: 48px; font-size: 14px; }
+  .pi-actions { height: 48px; padding: 0 10px; }
   .date-dialog { padding: 22px; border-radius: 15px; }
   .pi-stream { --index-gutter: 37px; --index-gap: 10px; }
   .digit-measure, .digit-run { font-size: 14px; letter-spacing: .018em; line-height: 1.9; }
