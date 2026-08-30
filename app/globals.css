@@ -2,19 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; --background: #09090a; --digits: #f1f1f3; --index: #6b6b71; --accent: #9b6750; }
+:root { color-scheme: dark; --background: #050506; --surface: #111113; --digits: #f5f5f7; --index: #74747a; --accent: #9b6953; }
 * { box-sizing: border-box; }
 html { min-width: 0; background: var(--background); }
-body { min-width: 0; margin: 0; overflow-x: hidden; color: var(--digits); background: var(--background); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body { min-width: 0; margin: 0; overflow-x: hidden; color: var(--digits); background: var(--background); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-synthesis: none; text-rendering: optimizeLegibility; }
 button { font: inherit; }
+::selection { color: #050506; background: #e9e9ec; }
 
-.pi-page { --edge-space: clamp(24px, 3.4vw, 52px); min-height: 100dvh; padding: 92px var(--edge-space) 48px; background: #09090a; }
-.pi-title { position: fixed; z-index: 2; top: 0; left: 0; width: 100%; padding: 25px var(--edge-space) 20px; color: #f5f5f7; background: #09090a; font-size: 15px; font-weight: 500; letter-spacing: -.015em; text-align: center; pointer-events: none; }
-.pi-actions { position: fixed; z-index: 4; top: 25px; right: var(--edge-space); display: flex; gap: 16px; }
-.pi-actions button, .today-button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; font-size: 11px; font-weight: 400; letter-spacing: -.01em; opacity: .58; transition: color 160ms ease, opacity 160ms ease; }
+.pi-page { --edge-space: clamp(24px, 3.4vw, 52px); min-height: 100dvh; padding: 94px var(--edge-space) 56px; background: var(--background); }
+.pi-title { position: fixed; z-index: 2; top: 0; left: 0; width: 100%; padding: 26px var(--edge-space) 18px; color: #f5f5f7; background: transparent; font-size: 13px; font-weight: 600; letter-spacing: -.01em; text-align: center; pointer-events: none; }
+.pi-actions { position: fixed; z-index: 4; top: 27px; right: var(--edge-space); display: flex; gap: 18px; }
+.pi-actions button, .today-button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; font-size: 10px; font-weight: 500; letter-spacing: .045em; text-transform: uppercase; opacity: .54; transition: color 180ms ease, opacity 180ms ease; }
 .pi-actions button:hover, .pi-actions button:focus-visible, .today-button:hover, .today-button:focus-visible { color: #f5f5f7; opacity: 1; outline: none; }
-.dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 56%); }
-.date-dialog { width: min(100%, 440px); padding: 26px; color: #f3f3f5; background: #151517; border: 1px solid #303034; border-radius: 18px; box-shadow: 0 24px 90px rgb(0 0 0 / 55%); }
+.dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 70%); animation: veil-in 220ms ease-out both; }
+.date-dialog { width: min(100%, 440px); padding: 28px; color: #f3f3f5; background: var(--surface); border: 1px solid #2a2a2e; border-radius: 20px; box-shadow: 0 30px 100px rgb(0 0 0 / 68%); animation: sheet-in 300ms cubic-bezier(.2, .8, .2, 1) both; }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 .dialog-heading h2 { margin: 0; font: 500 19px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; letter-spacing: -.025em; }
 .dialog-heading button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
@@ -23,8 +24,8 @@ button { font: inherit; }
 .date-label-row button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font: 400 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
 .date-composer { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
 .date-composer label { display: grid; gap: 7px; color: #929298; font: 400 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
-.date-composer input { width: 100%; min-width: 0; border: 1px solid #3a3a3e; border-radius: 10px; padding: 13px 11px; color: #f5f5f7; background: #1d1d20; font: 400 16px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; outline: none; }
-.date-composer input:focus { border-color: #77777e; }
+.date-composer input { width: 100%; min-width: 0; border: 1px solid #343438; border-radius: 10px; padding: 13px 11px; color: #f5f5f7; background: #19191b; font: 400 16px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; outline: none; transition: border-color 160ms ease, background 160ms ease; }
+.date-composer input:focus { border-color: #85858c; background: #1c1c1f; }
 .date-composer input::placeholder { color: #65656b; }
 .date-preview { margin: 14px 0 0; color: #97979d; font-size: 12px; }
 .date-preview strong { color: #d9d9dd; font-family: "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; font-weight: 400; }
@@ -34,18 +35,18 @@ button { font: inherit; }
 .dialog-actions .primary-action:disabled { cursor: not-allowed; opacity: .35; }
 .format-list { display: grid; gap: 8px; }
 .format-list p { margin: -7px 0 12px; color: #98989e; font-size: 13px; line-height: 1.45; }
-.format-list > button:not(.return-to-date) { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 1px solid #303034; border-radius: 11px; padding: 14px; color: #d9d9dd; background: #1a1a1c; cursor: pointer; text-align: left; }
-.format-list > button.selected { border-color: #737378; background: #232326; }
+.format-list > button:not(.return-to-date) { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 1px solid #2b2b2f; border-radius: 11px; padding: 14px; color: #d9d9dd; background: #18181a; cursor: pointer; text-align: left; transition: border-color 160ms ease, background 160ms ease; }
+.format-list > button.selected { border-color: #6c6c73; background: #202023; }
 .format-list > button span { font: 400 14px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; }
 .format-list > button small { color: #888890; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
 .return-to-date { margin-top: 16px; justify-self: start; }
 .pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; opacity: 0; transition: opacity 460ms cubic-bezier(.2, .8, .2, 1); }
 .pi-stream.is-visible { opacity: 1; }
 .digit-measure { position: absolute; visibility: hidden; contain: layout style; font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; white-space: pre; }
-.pi-line { display: grid; grid-template-columns: var(--index-gutter) minmax(0, 1fr); column-gap: var(--index-gap); min-width: 0; min-height: 42px; }
-.digit-index { padding-top: .39em; color: var(--index); font: 400 11px/1.68 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; letter-spacing: .01em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
-.digit-run { display: block; min-width: 0; color: var(--digits); font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.today-digit { color: #fffaf6; background: var(--accent); border-radius: 2px; }
+.pi-line { display: grid; grid-template-columns: var(--index-gutter) minmax(0, 1fr); column-gap: var(--index-gap); min-width: 0; min-height: 43px; }
+.digit-index { padding-top: .48em; color: var(--index); font: 400 10px/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .025em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
+.digit-run { display: block; min-width: 0; color: var(--digits); font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .034em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.today-digit { color: #fffaf8; background: var(--accent); border-radius: 2px; box-shadow: 0 0 0 1px rgb(255 245 239 / 9%); }
 .today-button { position: fixed; z-index: 3; right: var(--edge-space); bottom: 22px; }
 .stream-status { position: fixed; z-index: 3; bottom: 21px; left: 20px; color: #77767b; font-size: 11px; }
 .pi-loading { position: relative; min-height: calc(100dvh - 92px); overflow: hidden; color: #aaa9ad; }
@@ -57,11 +58,17 @@ button { font: inherit; }
 .pi-error button { border: 0; border-bottom: 1px solid currentColor; padding: 0; color: inherit; background: none; cursor: pointer; }
 @keyframes pulse { to { opacity: .25; transform: scale(.7); } }
 @keyframes pi-drift { to { transform: translateY(-16.8em); } }
+@keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
 
 @media (max-width: 620px) {
-  .pi-page { --edge-space: 16px; padding-top: 74px; padding-bottom: 28px; }
+  .pi-page { --edge-space: 16px; padding-top: 104px; padding-bottom: 28px; }
   .pi-title { padding-top: 20px; padding-bottom: 14px; font-size: 14px; }
-  .pi-actions { top: 21px; right: var(--edge-space); gap: 11px; }
+  .pi-actions { top: 55px; right: var(--edge-space); gap: 14px; }
   .date-dialog { padding: 22px; border-radius: 15px; }
   .pi-stream { --index-gutter: 37px; --index-gap: 10px; }
   .digit-measure, .digit-run { font-size: 14px; letter-spacing: .018em; line-height: 1.9; }
