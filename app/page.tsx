@@ -1,130 +1,172 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface SearchResult {
-  found: boolean;
-  dateString: string;
-  startDigit?: number;
-  endDigit?: number;
-  surroundingDigits?: string;
-  highlightStart?: number;
-  highlightLength?: number;
+const CHUNK_SIZE = 1_000;
+const DIGITS_PER_LINE = 50;
+
+type PiChunk = { start: number; digits: string };
+type DateMatch = { date: string; position: number };
+
+function todayAsDigits() {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function readableDate(date: string) {
+  return new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(
+    new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T12:00:00`),
+  );
 }
 
 export default function Home() {
-  const [result, setResult] = useState<SearchResult | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [match, setMatch] = useState<DateMatch | null>(null);
+  const [chunks, setChunks] = useState<PiChunk[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const chunksRef = useRef<PiChunk[]>([]);
+  const pendingRef = useRef(new Set<number>());
 
-  // Format date as YYYYMMDD
-  const formatDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}${month}${day}`;
-  };
-
-  // Search for date in pi
-  const searchDate = async (dateStr: string) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/search-pi?date=${dateStr}`);
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initialize with today's date
-  useEffect(() => {
-    const today = formatDate(new Date());
-    searchDate(today);
+  const updateChunks = useCallback((updater: (current: PiChunk[]) => PiChunk[]) => {
+    setChunks((current) => {
+      const next = updater(current);
+      chunksRef.current = next;
+      return next;
+    });
   }, []);
 
-  // Handle date picker change
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const dateStr = e.target.value.replace(/-/g, '');
-    searchDate(dateStr);
-  };
+  const fetchChunk = useCallback(async (start: number) => {
+    if (pendingRef.current.has(start) || chunksRef.current.some((chunk) => chunk.start === start)) return null;
+    pendingRef.current.add(start);
+    try {
+      const response = await fetch(`/api/pi-digits?start=${start}&count=${CHUNK_SIZE}`);
+      if (!response.ok) throw new Error('Could not retrieve this part of π.');
+      return await response.json() as PiChunk;
+    } finally {
+      pendingRef.current.delete(start);
+    }
+  }, []);
 
-  // Render pi digits with highlighting
-  const renderPiDigits = () => {
-    if (!result?.found || !result.surroundingDigits) return null;
+  useEffect(() => {
+    let cancelled = false;
 
-    const { surroundingDigits, highlightStart = 0, highlightLength = 8 } = result;
-    const before = surroundingDigits.substring(0, highlightStart);
-    const highlighted = surroundingDigits.substring(highlightStart, highlightStart + highlightLength);
-    const after = surroundingDigits.substring(highlightStart + highlightLength);
+    async function begin() {
+      try {
+        const date = todayAsDigits();
+        const matchResponse = await fetch(`/api/find-date?date=${date}`);
+        if (!matchResponse.ok) throw new Error('Could not find today in π.');
+        const found = await matchResponse.json() as { found: boolean; date: string; position: number };
+        if (!found.found) throw new Error("Today wasn't found in the available digits of π.");
 
-    return (
-      <div className="font-mono text-base text-gray-700 leading-relaxed">
-        <span className="text-gray-400">...</span>
-        {before}
-        <span className="bg-amber-100 text-amber-900 font-semibold px-0.5">
-          {highlighted}
-        </span>
-        {after}
-        <span className="text-gray-400">...</span>
-      </div>
-    );
+        const starts = [Math.max(1, found.position - CHUNK_SIZE), found.position, found.position + CHUNK_SIZE];
+        const results = await Promise.all(starts.map(fetchChunk));
+        if (cancelled) return;
+        const initialChunks = results.filter((chunk): chunk is PiChunk => chunk !== null).sort((a, b) => a.start - b.start);
+        if (initialChunks.length !== starts.length) throw new Error('Could not retrieve the opening digits of π.');
+
+        chunksRef.current = initialChunks;
+        setChunks(initialChunks);
+        setMatch({ date: found.date, position: found.position });
+        requestAnimationFrame(() => {
+          const viewer = viewerRef.current;
+          if (viewer) viewer.scrollTop = (CHUNK_SIZE / DIGITS_PER_LINE) * 29 - viewer.clientHeight / 2;
+        });
+      } catch (cause) {
+        if (!cancelled) setError(cause instanceof Error ? cause.message : 'Something went wrong.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    begin();
+    return () => { cancelled = true; };
+  }, [fetchChunk]);
+
+  const addChunk = useCallback(async (start: number, direction: 'before' | 'after') => {
+    const viewer = viewerRef.current;
+    if (!viewer || start < 1 || loadingMore) return;
+    setLoadingMore(true);
+    const previousHeight = viewer.scrollHeight;
+    try {
+      const chunk = await fetchChunk(start);
+      if (!chunk) return;
+      updateChunks((current) => [...current, chunk].sort((a, b) => a.start - b.start));
+      if (direction === 'before') {
+        requestAnimationFrame(() => {
+          const activeViewer = viewerRef.current;
+          if (activeViewer) activeViewer.scrollTop += activeViewer.scrollHeight - previousHeight;
+        });
+      }
+    } catch {
+      // The already-loaded part stays usable if an adjacent request fails.
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [fetchChunk, loadingMore, updateChunks]);
+
+  const handleScroll = useCallback(() => {
+    const viewer = viewerRef.current;
+    const current = chunksRef.current;
+    if (!viewer || current.length === 0 || loadingMore) return;
+    if (viewer.scrollTop < 180) {
+      void addChunk(current[0].start - CHUNK_SIZE, 'before');
+    } else if (viewer.scrollTop + viewer.clientHeight > viewer.scrollHeight - 180) {
+      const last = current[current.length - 1];
+      void addChunk(last.start + last.digits.length, 'after');
+    }
+  }, [addChunk, loadingMore]);
+
+  const returnToToday = () => {
+    document.querySelector('[data-today-in-pi]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex items-center justify-center p-8">
-      <div className="max-w-2xl w-full space-y-8">
-        
-        {isLoading ? (
-          <div className="text-center py-12 space-y-4">
-            <div className="inline-block animate-spin w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full"></div>
-            <p className="text-sm text-gray-600">Searching 1 billion digits of π...</p>
-            <p className="text-xs text-gray-400">This may take a moment</p>
-          </div>
-        ) : result?.found ? (
-          <>
-            {/* Result Text */}
-            <div className="text-center space-y-2">
-              <p className="text-sm text-gray-600">
-                <span className="font-mono font-semibold">{result.dateString}</span>
-                {' '}appears at digits{' '}
-                <span className="font-mono font-semibold">{result.startDigit?.toLocaleString()}</span>
-                –
-                <span className="font-mono font-semibold">{result.endDigit?.toLocaleString()}</span>
-                {' '}of π
-              </p>
-            </div>
+    <main className="pi-page">
+      <section className="pi-shell" aria-labelledby="page-title">
+        <header className="pi-header">
+          <p className="eyebrow">AN UNBROKEN VIEW OF π</p>
+          <h1 id="page-title">Today, written in pi.</h1>
+          <p className="intro">Scroll in either direction to move through the real digits. The highlighted eight digits are today&apos;s date.</p>
+        </header>
 
-            {/* Pi Digits Display */}
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              {renderPiDigits()}
+        {loading ? (
+          <div className="pi-loading" role="status"><span className="loading-dot" /> Locating today in π…</div>
+        ) : error ? (
+          <div className="pi-error" role="alert">{error} <button onClick={() => window.location.reload()}>Try again</button></div>
+        ) : match ? (
+          <>
+            <div className="pi-meta">
+              <div><span>Today</span><strong>{readableDate(match.date)}</strong></div>
+              <div><span>Begins at digit</span><strong>{match.position.toLocaleString()}</strong></div>
+              <button className="today-button" onClick={returnToToday}>Back to today</button>
+            </div>
+            <div className="pi-viewer-wrap">
+              <div className="viewer-label"><span>π = 3.</span><span>{loadingMore ? 'loading more digits…' : 'scroll to explore'}</span></div>
+              <div ref={viewerRef} className="pi-viewer" onScroll={handleScroll} aria-label="Scrollable digits of pi">
+                {chunks.map((chunk) => <PiChunkView key={chunk.start} chunk={chunk} date={match.date} datePosition={match.position} />)}
+              </div>
+              <p className="pi-note">Every digit shown is fetched from the Pi Delivery digit corpus. Highlighting changes color only—the date stays the same size as every other digit.</p>
             </div>
           </>
-        ) : (
-          <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              <span className="font-mono font-semibold">{result?.dateString}</span>
-              {' '}not found in the first 1 billion digits of π
-            </p>
-            <p className="text-xs text-gray-400">Try another date</p>
-          </div>
-        )}
-
-        {/* Date Picker */}
-        <div className="text-center">
-          <label className="inline-flex flex-col items-center gap-2">
-            <span className="text-xs text-gray-500">Pick a date</span>
-            <input
-              type="date"
-              onChange={handleDateChange}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-gray-400"
-              min="1000-01-01"
-              max="9999-12-31"
-            />
-          </label>
-        </div>
-      </div>
-    </div>
+        ) : null}
+      </section>
+    </main>
   );
+}
+
+function PiChunkView({ chunk, date, datePosition }: { chunk: PiChunk; date: string; datePosition: number }) {
+  const lines = chunk.digits.match(new RegExp(`.{1,${DIGITS_PER_LINE}}`, 'g')) ?? [];
+  return <>{lines.map((line, lineIndex) => {
+    const lineStart = chunk.start + lineIndex * DIGITS_PER_LINE;
+    return <div className="pi-line" key={lineStart}>
+      <span className="digit-index">{lineStart.toLocaleString()}</span>
+      <span className="digit-run">{line.split('').map((digit, index) => {
+        const position = lineStart + index;
+        const isToday = position >= datePosition && position < datePosition + date.length;
+        return <span key={position} className={isToday ? 'today-digit' : undefined} data-today-in-pi={isToday || undefined}>{digit}</span>;
+      })}</span>
+    </div>;
+  })}</>;
 }
