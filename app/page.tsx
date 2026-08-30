@@ -1,27 +1,36 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 const CHUNK_SIZE = 1_000;
+const DATE_FORMATS = {
+  us: { label: 'MM / DD / YYYY', format: (year: string, month: string, day: string) => `${month}${day}${year}` },
+  iso: { label: 'YYYY / MM / DD', format: (year: string, month: string, day: string) => `${year}${month}${day}` },
+  eu: { label: 'DD / MM / YYYY', format: (year: string, month: string, day: string) => `${day}${month}${year}` },
+} as const;
 
+type DateFormat = keyof typeof DATE_FORMATS;
 type PiChunk = { start: number; digits: string };
 type DateMatch = { date: string; position: number };
 
-function todayAsDigits() {
+function todayValue() {
   const now = new Date();
-  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }
 
-function readableDate(date: string) {
-  return new Intl.DateTimeFormat(undefined, { month: 'long', day: 'numeric', year: 'numeric' }).format(
-    new Date(`${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}T12:00:00`),
-  );
+function dateDigits(value: string, format: DateFormat) {
+  const [year, month, day] = value.split('-');
+  return DATE_FORMATS[format].format(year, month, day);
 }
 
 export default function Home() {
   const [match, setMatch] = useState<DateMatch | null>(null);
   const [chunks, setChunks] = useState<PiChunk[]>([]);
   const [digitsPerRow, setDigitsPerRow] = useState(50);
+  const [format, setFormat] = useState<DateFormat>('us');
+  const [selectedDate, setSelectedDate] = useState(todayValue);
+  const [showDateFinder, setShowDateFinder] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -31,6 +40,7 @@ export default function Home() {
   const pendingRef = useRef(new Map<number, Promise<PiChunk>>());
   const initialPositionedRef = useRef(false);
   const loadingMoreRef = useRef(false);
+  const searchIdRef = useRef(0);
 
   const updateChunks = useCallback((updater: (current: PiChunk[]) => PiChunk[]) => {
     setChunks((current) => {
@@ -59,8 +69,48 @@ export default function Home() {
     }
   }, []);
 
-  // The row width is measured from the actual active mono font, so it follows
-  // browser zoom and any viewport resize instead of relying on breakpoints.
+  const findDate = useCallback(async (digits: string, fallbackDigits?: string) => {
+    const searchId = ++searchIdRef.current;
+    initialPositionedRef.current = false;
+    setLoading(true);
+    setError(null);
+    setMatch(null);
+    chunksRef.current = [];
+    setChunks([]);
+
+    try {
+      const matchResponse = await fetch(`/api/find-date?date=${digits}`);
+      if (!matchResponse.ok) throw new Error('Could not search π right now.');
+      let found = await matchResponse.json() as { found: boolean; date: string; position: number };
+      if (!found.found && fallbackDigits && fallbackDigits !== digits) {
+        const fallbackResponse = await fetch(`/api/find-date?date=${fallbackDigits}`);
+        if (!fallbackResponse.ok) throw new Error('Could not search π right now.');
+        found = await fallbackResponse.json() as { found: boolean; date: string; position: number };
+      }
+      if (!found.found) throw new Error('That date is not in the searchable range of π. Try another format.');
+
+      const firstStart = Math.max(1, found.position - CHUNK_SIZE);
+      const initialChunks = (await Promise.all([firstStart, firstStart + CHUNK_SIZE, firstStart + 2 * CHUNK_SIZE].map(fetchChunk)))
+        .sort((a, b) => a.start - b.start);
+      if (searchId !== searchIdRef.current) return;
+
+      chunksRef.current = initialChunks;
+      setChunks(initialChunks);
+      setMatch({ date: found.date, position: found.position });
+      setShowDateFinder(false);
+    } catch (cause) {
+      if (searchId === searchIdRef.current) setError(cause instanceof Error ? cause.message : 'Something went wrong.');
+    } finally {
+      if (searchId === searchIdRef.current) setLoading(false);
+    }
+  }, [fetchChunk]);
+
+  // Preserve the existing working daily match on first load. The date finder
+  // itself defaults to the requested American format.
+  useEffect(() => { void findDate(dateDigits(todayValue(), 'iso')); }, [findDate]);
+
+  // Measure ten rendered glyphs from the active SF Mono stack. This responds
+  // to browser zoom and layout changes, avoiding fixed digits-per-row rules.
   useLayoutEffect(() => {
     const stream = streamRef.current;
     const measure = measureRef.current;
@@ -69,62 +119,35 @@ export default function Home() {
     const calculateRowLength = () => {
       const characterWidth = measure.getBoundingClientRect().width / 10;
       const styles = getComputedStyle(stream);
-      const gutter = Number.parseFloat(styles.getPropertyValue('--index-gutter')) || 64;
+      const gutter = Number.parseFloat(styles.getPropertyValue('--index-gutter')) || 68;
       const gap = Number.parseFloat(styles.getPropertyValue('--index-gap')) || 18;
       const available = stream.clientWidth - gutter - gap;
-      if (characterWidth > 0) setDigitsPerRow(Math.max(8, Math.floor(available / characterWidth)));
+      if (characterWidth > 0) setDigitsPerRow((current) => {
+        const next = Math.max(8, Math.floor(available / characterWidth));
+        return current === next ? current : next;
+      });
     };
 
     calculateRowLength();
     const observer = new ResizeObserver(calculateRowLength);
     observer.observe(stream);
     return () => observer.disconnect();
-  }, []);
+  }, [chunks.length]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function begin() {
-      try {
-        const date = todayAsDigits();
-        const matchResponse = await fetch(`/api/find-date?date=${date}`);
-        if (!matchResponse.ok) throw new Error('Could not find today in π.');
-        const found = await matchResponse.json() as { found: boolean; date: string; position: number };
-        if (!found.found) throw new Error("Today wasn't found in the available digits of π.");
-
-        const firstStart = Math.max(1, found.position - CHUNK_SIZE);
-        const initialChunks = (await Promise.all([firstStart, firstStart + CHUNK_SIZE, firstStart + 2 * CHUNK_SIZE].map(fetchChunk)))
-          .sort((a, b) => a.start - b.start);
-        if (cancelled) return;
-
-        chunksRef.current = initialChunks;
-        setChunks(initialChunks);
-        setMatch({ date: found.date, position: found.position });
-      } catch (cause) {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : 'Something went wrong.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    begin();
-    return () => { cancelled = true; };
-  }, [fetchChunk]);
-
-  const centerToday = useCallback((behavior: ScrollBehavior = 'auto') => {
-    const today = document.querySelector<HTMLElement>('[data-today-in-pi]');
-    if (!today) return;
-    window.scrollTo({ top: Math.max(0, window.scrollY + today.getBoundingClientRect().top - window.innerHeight / 2 + today.offsetHeight / 2), behavior });
+  const centerMatch = useCallback((behavior: ScrollBehavior = 'auto') => {
+    const target = document.querySelector<HTMLElement>('[data-date-match]');
+    if (!target) return;
+    window.scrollTo({ top: Math.max(0, window.scrollY + target.getBoundingClientRect().top - window.innerHeight / 2 + target.offsetHeight / 2), behavior });
   }, []);
 
   useEffect(() => {
     if (!match || initialPositionedRef.current) return;
     const frame = requestAnimationFrame(() => {
-      centerToday();
+      centerMatch();
       initialPositionedRef.current = true;
     });
     return () => cancelAnimationFrame(frame);
-  }, [centerToday, digitsPerRow, match]);
+  }, [centerMatch, digitsPerRow, match]);
 
   const addChunk = useCallback(async (start: number, direction: 'before' | 'after') => {
     if (start < 1 || loadingMoreRef.current) return;
@@ -134,11 +157,7 @@ export default function Home() {
     try {
       const chunk = await fetchChunk(start);
       updateChunks((current) => [...current, chunk].sort((a, b) => a.start - b.start));
-      if (direction === 'before') {
-        requestAnimationFrame(() => window.scrollBy(0, document.documentElement.scrollHeight - previousHeight));
-      }
-    } catch {
-      // The loaded portion remains readable if an adjacent request is unavailable.
+      if (direction === 'before') requestAnimationFrame(() => window.scrollBy(0, document.documentElement.scrollHeight - previousHeight));
     } finally {
       loadingMoreRef.current = false;
       setLoadingMore(false);
@@ -150,35 +169,55 @@ export default function Home() {
       const current = chunksRef.current;
       if (!current.length || loadingMoreRef.current) return;
       const threshold = Math.max(360, window.innerHeight * 0.6);
-      if (window.scrollY < threshold) {
-        void addChunk(current[0].start - CHUNK_SIZE, 'before');
-      } else if (window.innerHeight + window.scrollY > document.documentElement.scrollHeight - threshold) {
+      if (window.scrollY < threshold) void addChunk(current[0].start - CHUNK_SIZE, 'before');
+      else if (window.innerHeight + window.scrollY > document.documentElement.scrollHeight - threshold) {
         const last = current[current.length - 1];
         void addChunk(last.start + last.digits.length, 'after');
       }
     };
-
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [addChunk]);
 
+  const submitDate = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (selectedDate) void findDate(dateDigits(selectedDate, format));
+  };
   const firstChunk = chunks[0];
   const digitStream = chunks.map((chunk) => chunk.digits).join('');
 
   return (
     <main className="pi-page">
-      <header className="pi-title" aria-label="The Number Pi">The Number π</header>
+      <header className="pi-title">The Number π</header>
+      <nav className="pi-actions" aria-label="Pi controls">
+        <button onClick={() => { setShowDateFinder((open) => !open); setShowSettings(false); }}>Go to Date</button>
+        <button onClick={() => { setShowSettings((open) => !open); setShowDateFinder(false); }}>Settings</button>
+      </nav>
+      {showDateFinder && <form className="date-finder" onSubmit={submitDate}>
+        <input aria-label="Date to find" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+        <button type="submit">Find</button>
+        <button type="button" onClick={() => {
+          const today = todayValue();
+          setSelectedDate(today);
+          void findDate(dateDigits(today, format), dateDigits(today, 'iso'));
+        }}>Today</button>
+      </form>}
+      {showSettings && <div className="settings-menu" role="group" aria-label="Date search format">
+        <span>Date format</span>
+        {(Object.keys(DATE_FORMATS) as DateFormat[]).map((key) => <button key={key} className={format === key ? 'selected' : undefined} onClick={() => setFormat(key)}>{DATE_FORMATS[key].label}</button>)}
+      </div>}
+
       {loading ? (
-        <div className="pi-loading" role="status"><span className="loading-dot" /> Locating today in π</div>
+        <div className="pi-loading" role="status"><span className="loading-dot" /> Locating a date in π</div>
       ) : error ? (
-        <div className="pi-error" role="alert">{error} <button onClick={() => window.location.reload()}>Try again</button></div>
+        <div className="pi-error" role="alert">{error} <button onClick={() => void findDate(dateDigits(todayValue(), 'iso'))}>Return to today</button></div>
       ) : match && firstChunk ? (
         <>
           <div ref={streamRef} className="pi-stream" aria-label="Scrollable digits of pi">
             <span ref={measureRef} className="digit-measure" aria-hidden="true">0000000000</span>
             <PiRows digits={digitStream} start={firstChunk.start} rowLength={digitsPerRow} date={match.date} datePosition={match.position} />
           </div>
-          <button className="today-button" onClick={() => centerToday('smooth')} aria-label={`Return to ${readableDate(match.date)} in pi`}>Today</button>
+          <button className="today-button" onClick={() => centerMatch('smooth')}>Today</button>
           {loadingMore && <span className="stream-status" aria-live="polite">Loading π</span>}
         </>
       ) : null}
@@ -192,14 +231,12 @@ function PiRows({ digits, start, rowLength, date, datePosition }: { digits: stri
     return { digits: digits.slice(offset, offset + rowLength), position: start + offset };
   });
 
-  return <>{rows.map((row) => (
-    <div className="pi-line" key={row.position}>
-      <span className="digit-index">{row.position.toLocaleString()}</span>
-      <span className="digit-run">{row.digits.split('').map((digit, index) => {
-        const position = row.position + index;
-        const isToday = position >= datePosition && position < datePosition + date.length;
-        return <span key={position} className={isToday ? 'today-digit' : undefined} data-today-in-pi={isToday || undefined}>{digit}</span>;
-      })}</span>
-    </div>
-  ))}</>;
+  return <>{rows.map((row) => <div className="pi-line" key={row.position}>
+    <span className="digit-index">{row.position.toLocaleString()}</span>
+    <span className="digit-run">{row.digits.split('').map((digit, index) => {
+      const position = row.position + index;
+      const isMatch = position >= datePosition && position < datePosition + date.length;
+      return <span key={position} className={isMatch ? 'today-digit' : undefined} data-date-match={isMatch || undefined}>{digit}</span>;
+    })}</span>
+  </div>)}</>;
 }
