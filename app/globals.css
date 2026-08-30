@@ -18,14 +18,20 @@ button { font: inherit; }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 .dialog-heading h2 { margin: 0; font: 500 19px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; letter-spacing: -.025em; }
 .dialog-heading button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
-.date-label { display: block; margin-bottom: 9px; color: #a4a4aa; font-size: 12px; }
-.date-input { width: 100%; border: 1px solid #3a3a3e; border-radius: 10px; padding: 13px 14px; color: #f5f5f7; background: #1d1d20; font: 400 16px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; color-scheme: dark; outline: none; }
-.date-input:focus { border-color: #77777e; }
+.date-label-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 9px; }
+.date-label { color: #a4a4aa; font-size: 12px; }
+.date-label-row button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font: 400 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+.date-composer { display: grid; grid-template-columns: 1fr 1fr 1.35fr; gap: 8px; }
+.date-composer label { display: grid; gap: 7px; color: #929298; font: 400 11px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+.date-composer input { width: 100%; min-width: 0; border: 1px solid #3a3a3e; border-radius: 10px; padding: 13px 11px; color: #f5f5f7; background: #1d1d20; font: 400 16px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; outline: none; }
+.date-composer input:focus { border-color: #77777e; }
+.date-composer input::placeholder { color: #65656b; }
 .date-preview { margin: 14px 0 0; color: #97979d; font-size: 12px; }
 .date-preview strong { color: #d9d9dd; font-family: "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; font-weight: 400; }
 .dialog-actions { display: flex; align-items: center; gap: 16px; margin-top: 28px; }
 .dialog-actions button, .return-to-date { border: 0; padding: 0; color: #aaaab0; background: transparent; cursor: pointer; font: 400 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
 .dialog-actions .primary-action { margin-left: auto; border-radius: 999px; padding: 9px 14px; color: #101011; background: #f1f1f3; font-weight: 500; }
+.dialog-actions .primary-action:disabled { cursor: not-allowed; opacity: .35; }
 .format-list { display: grid; gap: 8px; }
 .format-list p { margin: -7px 0 12px; color: #98989e; font-size: 13px; line-height: 1.45; }
 .format-list > button:not(.return-to-date) { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 1px solid #303034; border-radius: 11px; padding: 14px; color: #d9d9dd; background: #1a1a1c; cursor: pointer; text-align: left; }

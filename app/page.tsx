@@ -4,9 +4,9 @@ import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } 
 
 const CHUNK_SIZE = 1_000;
 const DATE_FORMATS = {
-  us: { label: 'MM / DD / YYYY', format: (year: string, month: string, day: string) => `${month}${day}${year}` },
-  iso: { label: 'YYYY / MM / DD', format: (year: string, month: string, day: string) => `${year}${month}${day}` },
-  eu: { label: 'DD / MM / YYYY', format: (year: string, month: string, day: string) => `${day}${month}${year}` },
+  us: { label: 'American · Month first', example: 'MM / DD / YYYY', order: ['month', 'day', 'year'], format: (year: string, month: string, day: string) => `${month}${day}${year}` },
+  iso: { label: 'International · Year first', example: 'YYYY / MM / DD', order: ['year', 'month', 'day'], format: (year: string, month: string, day: string) => `${year}${month}${day}` },
+  eu: { label: 'European · Day first', example: 'DD / MM / YYYY', order: ['day', 'month', 'year'], format: (year: string, month: string, day: string) => `${day}${month}${year}` },
 } as const;
 
 type DateFormat = keyof typeof DATE_FORMATS;
@@ -20,7 +20,11 @@ function todayValue() {
 
 function dateDigits(value: string, format: DateFormat) {
   const [year, month, day] = value.split('-');
-  return DATE_FORMATS[format].format(year, month, day);
+  return DATE_FORMATS[format].format(year ?? '', month ?? '', day ?? '');
+}
+
+function isCompleteDate(value: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 export default function Home() {
@@ -180,7 +184,19 @@ export default function Home() {
 
   const submitDate = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (selectedDate) void findDate(dateDigits(selectedDate, format));
+    if (isCompleteDate(selectedDate)) void findDate(dateDigits(selectedDate, format));
+  };
+  const [year = '', month = '', day = ''] = selectedDate.split('-');
+  const dateParts = { year, month, day };
+  const updateDatePart = (part: 'year' | 'month' | 'day', value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, part === 'year' ? 4 : 2);
+    const next = { ...dateParts, [part]: digits };
+    setSelectedDate(`${next.year}-${next.month}-${next.day}`);
+  };
+  const findToday = () => {
+    const today = todayValue();
+    setSelectedDate(today);
+    void findDate(dateDigits(today, format), dateDigits(today, 'iso'));
   };
   const firstChunk = chunks[0];
   const digitStream = chunks.map((chunk) => chunk.digits).join('');
@@ -189,6 +205,7 @@ export default function Home() {
     <main className="pi-page">
       <header className="pi-title">The Number π</header>
       <nav className="pi-actions" aria-label="Pi controls">
+        <button onClick={findToday}>Today</button>
         <button onClick={() => setDialog('date')}>Go to Date</button>
         <button onClick={() => setDialog('settings')}>Settings</button>
       </nav>
@@ -199,22 +216,23 @@ export default function Home() {
             <button onClick={() => setDialog(null)} aria-label="Close">Close</button>
           </div>
           {dialog === 'date' ? <form onSubmit={submitDate}>
-            <label className="date-label" htmlFor="date-input">Choose a date</label>
-            <input id="date-input" className="date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-            <p className="date-preview">Searching π for <strong>{selectedDate ? dateDigits(selectedDate, format) : '—'}</strong> · {DATE_FORMATS[format].label}</p>
+            <div className="date-label-row"><label className="date-label">Choose a date</label><button type="button" onClick={() => setDialog('settings')}>{DATE_FORMATS[format].label}</button></div>
+            <div className="date-composer">
+              {DATE_FORMATS[format].order.map((part) => <label key={part}>
+                <span>{part === 'year' ? 'Year' : part === 'month' ? 'Month' : 'Day'}</span>
+                <input inputMode="numeric" autoComplete="off" placeholder={part === 'year' ? 'YYYY' : part === 'month' ? 'MM' : 'DD'} value={dateParts[part]} onChange={(event) => updateDatePart(part, event.target.value)} />
+              </label>)}
+            </div>
+            <p className="date-preview">Searching π for <strong>{isCompleteDate(selectedDate) ? dateDigits(selectedDate, format) : 'Complete the date'}</strong> · {DATE_FORMATS[format].example}</p>
             <div className="dialog-actions">
               <button type="button" onClick={() => setDialog('settings')}>Format</button>
-              <button type="button" onClick={() => {
-                const today = todayValue();
-                setSelectedDate(today);
-                void findDate(dateDigits(today, format), dateDigits(today, 'iso'));
-              }}>Today</button>
-              <button className="primary-action" type="submit">Find in π</button>
+              <button type="button" onClick={findToday}>Today</button>
+              <button className="primary-action" type="submit" disabled={!isCompleteDate(selectedDate)}>Find in π</button>
             </div>
           </form> : <div className="format-list" role="group" aria-label="Date search format">
             <p>Choose how dates are written before searching.</p>
             {(Object.keys(DATE_FORMATS) as DateFormat[]).map((key) => <button key={key} className={format === key ? 'selected' : undefined} onClick={() => setFormat(key)}>
-              <span>{DATE_FORMATS[key].label}</span><small>{key === 'us' ? 'American' : key === 'iso' ? 'Year first' : 'Day first'}</small>
+              <span>{DATE_FORMATS[key].label}</span><small>{DATE_FORMATS[key].example}</small>
             </button>)}
             <button className="return-to-date" onClick={() => setDialog('date')}>Back to date</button>
           </div>}
