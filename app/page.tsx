@@ -279,7 +279,7 @@ function SettingsIcon() {
 
 function LoadingPiStream() {
   const digits = LOADING_DIGITS.repeat(7);
-  const rows = digits.match(/.{1,50}/g) ?? [];
+  const rows = digits.match(/.{1,86}/g) ?? [];
   return <div className="pi-loading" role="status" aria-label="Locating a date in pi">
     <div className="loading-drift" aria-hidden="true">{rows.map((row, index) => <div className="loading-line" key={index}>{row}</div>)}</div>
     <span className="loading-status"><i className="loading-dot" /> Locating a date in π</span>
