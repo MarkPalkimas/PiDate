@@ -39,7 +39,8 @@ button { font: inherit; }
 .format-list > button span { font: 400 14px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; }
 .format-list > button small { color: #888890; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
 .return-to-date { margin-top: 16px; justify-self: start; }
-.pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; }
+.pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; opacity: 0; transition: opacity 460ms cubic-bezier(.2, .8, .2, 1); }
+.pi-stream.is-visible { opacity: 1; }
 .digit-measure { position: absolute; visibility: hidden; contain: layout style; font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; white-space: pre; }
 .pi-line { display: grid; grid-template-columns: var(--index-gutter) minmax(0, 1fr); column-gap: var(--index-gap); min-width: 0; min-height: 42px; }
 .digit-index { padding-top: .39em; color: var(--index); font: 400 11px/1.68 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; letter-spacing: .01em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
@@ -47,11 +48,15 @@ button { font: inherit; }
 .today-digit { color: #fffaf6; background: var(--accent); border-radius: 2px; }
 .today-button { position: fixed; z-index: 3; right: var(--edge-space); bottom: 22px; }
 .stream-status { position: fixed; z-index: 3; bottom: 21px; left: 20px; color: #77767b; font-size: 11px; }
-.pi-loading, .pi-error { display: flex; align-items: center; justify-content: center; min-height: calc(100dvh - 92px); gap: 9px; color: #aaa9ad; font-size: 13px; }
+.pi-loading { position: relative; min-height: calc(100dvh - 92px); overflow: hidden; color: #aaa9ad; }
+.loading-drift { position: absolute; top: -40%; left: 0; width: 100%; padding-left: calc(var(--index-gutter, 68px) + var(--index-gap, 18px)); color: #86868c; font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; opacity: .28; animation: pi-drift 2.2s linear infinite; }
+.loading-line { height: 1.68em; white-space: nowrap; }
+.loading-status { position: absolute; bottom: 26px; left: 0; display: inline-flex; align-items: center; gap: 9px; color: #77777d; font-size: 12px; }
 .loading-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: pulse 900ms ease-in-out infinite alternate; }
-.pi-error { flex-direction: column; color: #c9a38e; text-align: center; }
+.pi-error { display: flex; align-items: center; justify-content: center; min-height: calc(100dvh - 92px); flex-direction: column; color: #c9a38e; text-align: center; }
 .pi-error button { border: 0; border-bottom: 1px solid currentColor; padding: 0; color: inherit; background: none; cursor: pointer; }
 @keyframes pulse { to { opacity: .25; transform: scale(.7); } }
+@keyframes pi-drift { to { transform: translateY(-16.8em); } }
 
 @media (max-width: 620px) {
   .pi-page { --edge-space: 16px; padding-top: 74px; padding-bottom: 28px; }
@@ -64,4 +69,6 @@ button { font: inherit; }
   .digit-index { padding-top: .5em; font-size: 9px; }
   .today-button { right: 10px; bottom: 10px; }
   .stream-status { bottom: 13px; left: 12px; }
+  .loading-drift { padding-left: 47px; font-size: 14px; letter-spacing: .018em; line-height: 1.9; }
+  .loading-line { height: 1.9em; }
 }

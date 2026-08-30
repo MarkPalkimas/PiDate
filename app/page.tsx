@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 const CHUNK_SIZE = 1_000;
+const LOADING_DIGITS = '141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930381964428810975665933446128475648233786783165271201909145648566923460348610454326648213393607260249141273724587006606315588174881520920962829254091715364367892590360011330530548820466521384146951941511609';
 const DATE_FORMATS = {
   us: { label: 'American · Month first', example: 'MM / DD / YYYY', order: ['month', 'day', 'year'], format: (year: string, month: string, day: string) => `${month}${day}${year}` },
   iso: { label: 'International · Year first', example: 'YYYY / MM / DD', order: ['year', 'month', 'day'], format: (year: string, month: string, day: string) => `${year}${month}${day}` },
@@ -37,6 +38,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [streamVisible, setStreamVisible] = useState(false);
   const streamRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const chunksRef = useRef<PiChunk[]>([]);
@@ -75,6 +77,8 @@ export default function Home() {
   const findDate = useCallback(async (digits: string, fallbackDigits?: string) => {
     const searchId = ++searchIdRef.current;
     initialPositionedRef.current = false;
+    setStreamVisible(false);
+    window.scrollTo(0, 0);
     setLoading(true);
     setError(null);
     setMatch(null);
@@ -147,7 +151,10 @@ export default function Home() {
     if (!match || initialPositionedRef.current) return;
     const frame = requestAnimationFrame(() => {
       centerMatch();
-      initialPositionedRef.current = true;
+      requestAnimationFrame(() => {
+        initialPositionedRef.current = true;
+        setStreamVisible(true);
+      });
     });
     return () => cancelAnimationFrame(frame);
   }, [centerMatch, digitsPerRow, match]);
@@ -240,12 +247,12 @@ export default function Home() {
       </div>}
 
       {loading ? (
-        <div className="pi-loading" role="status"><span className="loading-dot" /> Locating a date in π</div>
+        <LoadingPiStream />
       ) : error ? (
         <div className="pi-error" role="alert">{error} <button onClick={() => void findDate(dateDigits(todayValue(), 'iso'))}>Return to today</button></div>
       ) : match && firstChunk ? (
         <>
-          <div ref={streamRef} className="pi-stream" aria-label="Scrollable digits of pi">
+          <div ref={streamRef} className={`pi-stream${streamVisible ? ' is-visible' : ''}`} aria-label="Scrollable digits of pi">
             <span ref={measureRef} className="digit-measure" aria-hidden="true">0000000000</span>
             <PiRows digits={digitStream} start={firstChunk.start} rowLength={digitsPerRow} date={match.date} datePosition={match.position} />
           </div>
@@ -255,6 +262,15 @@ export default function Home() {
       ) : null}
     </main>
   );
+}
+
+function LoadingPiStream() {
+  const digits = LOADING_DIGITS.repeat(7);
+  const rows = digits.match(/.{1,50}/g) ?? [];
+  return <div className="pi-loading" role="status" aria-label="Locating a date in pi">
+    <div className="loading-drift" aria-hidden="true">{rows.map((row, index) => <div className="loading-line" key={index}>{row}</div>)}</div>
+    <span className="loading-status"><i className="loading-dot" /> Locating a date in π</span>
+  </div>;
 }
 
 function PiRows({ digits, start, rowLength, date, datePosition }: { digits: string; start: number; rowLength: number; date: string; datePosition: number }) {
