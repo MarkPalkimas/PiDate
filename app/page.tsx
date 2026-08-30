@@ -27,7 +27,7 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const viewerRef = useRef<HTMLDivElement>(null);
   const chunksRef = useRef<PiChunk[]>([]);
-  const pendingRef = useRef(new Set<number>());
+  const pendingRef = useRef(new Map<number, Promise<PiChunk>>());
 
   const updateChunks = useCallback((updater: (current: PiChunk[]) => PiChunk[]) => {
     setChunks((current) => {
@@ -38,12 +38,20 @@ export default function Home() {
   }, []);
 
   const fetchChunk = useCallback(async (start: number) => {
-    if (pendingRef.current.has(start) || chunksRef.current.some((chunk) => chunk.start === start)) return null;
-    pendingRef.current.add(start);
-    try {
+    const existing = chunksRef.current.find((chunk) => chunk.start === start);
+    if (existing) return existing;
+
+    const pending = pendingRef.current.get(start);
+    if (pending) return pending;
+
+    const request = (async () => {
       const response = await fetch(`/api/pi-digits?start=${start}&count=${CHUNK_SIZE}`);
       if (!response.ok) throw new Error('Could not retrieve this part of π.');
       return await response.json() as PiChunk;
+    })();
+    pendingRef.current.set(start, request);
+    try {
+      return await request;
     } finally {
       pendingRef.current.delete(start);
     }
@@ -61,17 +69,16 @@ export default function Home() {
         if (!found.found) throw new Error("Today wasn't found in the available digits of π.");
 
         const starts = [Math.max(1, found.position - CHUNK_SIZE), found.position, found.position + CHUNK_SIZE];
-        const results = await Promise.all(starts.map(fetchChunk));
+        const initialChunks = (await Promise.all(starts.map(fetchChunk))).sort((a, b) => a.start - b.start);
         if (cancelled) return;
-        const initialChunks = results.filter((chunk): chunk is PiChunk => chunk !== null).sort((a, b) => a.start - b.start);
-        if (initialChunks.length !== starts.length) throw new Error('Could not retrieve the opening digits of π.');
 
         chunksRef.current = initialChunks;
         setChunks(initialChunks);
         setMatch({ date: found.date, position: found.position });
         requestAnimationFrame(() => {
           const viewer = viewerRef.current;
-          if (viewer) viewer.scrollTop = (CHUNK_SIZE / DIGITS_PER_LINE) * 29 - viewer.clientHeight / 2;
+          const today = viewer?.querySelector<HTMLElement>('[data-today-in-pi]');
+          if (viewer && today) viewer.scrollTop = today.offsetTop - viewer.clientHeight / 2 + today.offsetHeight / 2;
         });
       } catch (cause) {
         if (!cancelled) setError(cause instanceof Error ? cause.message : 'Something went wrong.');
@@ -91,7 +98,6 @@ export default function Home() {
     const previousHeight = viewer.scrollHeight;
     try {
       const chunk = await fetchChunk(start);
-      if (!chunk) return;
       updateChunks((current) => [...current, chunk].sort((a, b) => a.start - b.start));
       if (direction === 'before') {
         requestAnimationFrame(() => {
@@ -119,36 +125,27 @@ export default function Home() {
   }, [addChunk, loadingMore]);
 
   const returnToToday = () => {
-    document.querySelector('[data-today-in-pi]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const viewer = viewerRef.current;
+    const today = viewer?.querySelector<HTMLElement>('[data-today-in-pi]');
+    if (viewer && today) viewer.scrollTo({ top: today.offsetTop - viewer.clientHeight / 2 + today.offsetHeight / 2, behavior: 'smooth' });
   };
 
   return (
     <main className="pi-page">
-      <section className="pi-shell" aria-labelledby="page-title">
-        <header className="pi-header">
-          <p className="eyebrow">AN UNBROKEN VIEW OF π</p>
-          <h1 id="page-title">Today, written in pi.</h1>
-          <p className="intro">Scroll in either direction to move through the real digits. The highlighted eight digits are today&apos;s date.</p>
-        </header>
-
+      <section className="pi-shell" aria-label="Today in pi">
         {loading ? (
           <div className="pi-loading" role="status"><span className="loading-dot" /> Locating today in π…</div>
         ) : error ? (
           <div className="pi-error" role="alert">{error} <button onClick={() => window.location.reload()}>Try again</button></div>
         ) : match ? (
           <>
-            <div className="pi-meta">
-              <div><span>Today</span><strong>{readableDate(match.date)}</strong></div>
-              <div><span>Begins at digit</span><strong>{match.position.toLocaleString()}</strong></div>
-              <button className="today-button" onClick={returnToToday}>Back to today</button>
-            </div>
             <div className="pi-viewer-wrap">
-              <div className="viewer-label"><span>π = 3.</span><span>{loadingMore ? 'loading more digits…' : 'scroll to explore'}</span></div>
               <div ref={viewerRef} className="pi-viewer" onScroll={handleScroll} aria-label="Scrollable digits of pi">
                 {chunks.map((chunk) => <PiChunkView key={chunk.start} chunk={chunk} date={match.date} datePosition={match.position} />)}
               </div>
-              <p className="pi-note">Every digit shown is fetched from the Pi Delivery digit corpus. Highlighting changes color only—the date stays the same size as every other digit.</p>
             </div>
+            <button className="today-button" onClick={returnToToday} aria-label={`Return to ${readableDate(match.date)} in pi`}>Today</button>
+            {loadingMore && <span className="stream-status" aria-live="polite">Loading π…</span>}
           </>
         ) : null}
       </section>
