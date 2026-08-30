@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 const PI_SEARCH_URL = 'https://www.angio.net/pi/bigpi.cgi';
+const EXTENDED_PI_SEARCH_URL = 'https://pi.thefirstverse.com/api/search/substring';
 
 type CachedMatch = { position: number; expires: number };
 const matches = new Map<string, CachedMatch>();
@@ -35,7 +36,24 @@ export async function GET(request: Request) {
 
     const html = await response.text();
     const match = html.match(/occurs at position\s+([\d,]+)/i);
-    if (!match) return NextResponse.json({ found: false, date });
+    if (!match) {
+      // The primary source covers 200M digits. Fall back to a public 9B-digit
+      // index before reporting that an eight-digit date cannot be located.
+      const extendedUrl = new URL(EXTENDED_PI_SEARCH_URL);
+      extendedUrl.searchParams.set('q', date);
+      extendedUrl.searchParams.set('top', '1');
+      const extendedResponse = await fetch(extendedUrl, {
+        signal: AbortSignal.timeout(8_000),
+        next: { revalidate: 86_400 },
+      });
+      if (!extendedResponse.ok) throw new Error(`Extended Pi search returned ${extendedResponse.status}`);
+      const extended = await extendedResponse.json() as { positions?: number[] };
+      const position = extended.positions?.[0];
+      if (typeof position !== 'number' || !Number.isSafeInteger(position) || position < 1) return NextResponse.json({ found: false, date });
+
+      matches.set(date, { position, expires: Date.now() + CACHE_FOR_MS });
+      return NextResponse.json({ found: true, date, position });
+    }
 
     const position = Number(match[1].replaceAll(',', ''));
     if (!Number.isSafeInteger(position) || position < 1) throw new Error('Invalid position returned by Pi search');

@@ -13,19 +13,32 @@ button { font: inherit; }
 .pi-actions { position: fixed; z-index: 4; top: 25px; right: var(--edge-space); display: flex; gap: 16px; }
 .pi-actions button, .today-button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; font-size: 11px; font-weight: 400; letter-spacing: -.01em; opacity: .58; transition: color 160ms ease, opacity 160ms ease; }
 .pi-actions button:hover, .pi-actions button:focus-visible, .today-button:hover, .today-button:focus-visible { color: #f5f5f7; opacity: 1; outline: none; }
-.date-finder, .settings-menu { position: fixed; z-index: 4; top: 53px; right: var(--edge-space); display: flex; align-items: center; gap: 10px; padding: 10px 0; color: #9b9ba1; background: #09090a; font-size: 11px; }
-.date-finder input { width: 132px; border: 0; border-bottom: 1px solid #343439; padding: 3px 0 5px; color: #ededf0; background: transparent; font: inherit; color-scheme: dark; outline: none; }
-.date-finder input:focus { border-color: #85858b; }
-.date-finder button, .settings-menu button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font: inherit; }
-.date-finder button:hover, .settings-menu button:hover, .settings-menu button.selected { color: #f5f5f7; }
-.settings-menu { display: grid; grid-template-columns: auto auto auto auto; gap: 12px; }
-.settings-menu span { color: #636369; }
+.dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 56%); }
+.date-dialog { width: min(100%, 440px); padding: 26px; color: #f3f3f5; background: #151517; border: 1px solid #303034; border-radius: 18px; box-shadow: 0 24px 90px rgb(0 0 0 / 55%); }
+.dialog-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+.dialog-heading h2 { margin: 0; font: 500 19px/1.2 -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; letter-spacing: -.025em; }
+.dialog-heading button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+.date-label { display: block; margin-bottom: 9px; color: #a4a4aa; font-size: 12px; }
+.date-input { width: 100%; border: 1px solid #3a3a3e; border-radius: 10px; padding: 13px 14px; color: #f5f5f7; background: #1d1d20; font: 400 16px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; color-scheme: dark; outline: none; }
+.date-input:focus { border-color: #77777e; }
+.date-preview { margin: 14px 0 0; color: #97979d; font-size: 12px; }
+.date-preview strong { color: #d9d9dd; font-family: "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; font-weight: 400; }
+.dialog-actions { display: flex; align-items: center; gap: 16px; margin-top: 28px; }
+.dialog-actions button, .return-to-date { border: 0; padding: 0; color: #aaaab0; background: transparent; cursor: pointer; font: 400 13px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+.dialog-actions .primary-action { margin-left: auto; border-radius: 999px; padding: 9px 14px; color: #101011; background: #f1f1f3; font-weight: 500; }
+.format-list { display: grid; gap: 8px; }
+.format-list p { margin: -7px 0 12px; color: #98989e; font-size: 13px; line-height: 1.45; }
+.format-list > button:not(.return-to-date) { display: flex; align-items: center; justify-content: space-between; width: 100%; border: 1px solid #303034; border-radius: 11px; padding: 14px; color: #d9d9dd; background: #1a1a1c; cursor: pointer; text-align: left; }
+.format-list > button.selected { border-color: #737378; background: #232326; }
+.format-list > button span { font: 400 14px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; }
+.format-list > button small { color: #888890; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+.return-to-date { margin-top: 16px; justify-self: start; }
 .pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; }
 .digit-measure { position: absolute; visibility: hidden; contain: layout style; font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; white-space: pre; }
 .pi-line { display: grid; grid-template-columns: var(--index-gutter) minmax(0, 1fr); column-gap: var(--index-gap); min-width: 0; min-height: 42px; }
 .digit-index { padding-top: .39em; color: var(--index); font: 400 11px/1.68 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; letter-spacing: .01em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
 .digit-run { display: block; min-width: 0; color: var(--digits); font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.today-digit { margin: 0 -.02em; padding: .04em .02em; color: #fffaf6; background: var(--accent); border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.today-digit { color: #fffaf6; background: var(--accent); border-radius: 2px; }
 .today-button { position: fixed; z-index: 3; right: var(--edge-space); bottom: 22px; }
 .stream-status { position: fixed; z-index: 3; bottom: 21px; left: 20px; color: #77767b; font-size: 11px; }
 .pi-loading, .pi-error { display: flex; align-items: center; justify-content: center; min-height: calc(100dvh - 92px); gap: 9px; color: #aaa9ad; font-size: 13px; }
@@ -38,10 +51,7 @@ button { font: inherit; }
   .pi-page { --edge-space: 16px; padding-top: 74px; padding-bottom: 28px; }
   .pi-title { padding-top: 20px; padding-bottom: 14px; font-size: 14px; }
   .pi-actions { top: 21px; right: var(--edge-space); gap: 11px; }
-  .date-finder, .settings-menu { top: 45px; right: var(--edge-space); gap: 8px; }
-  .date-finder input { width: 119px; }
-  .settings-menu { grid-template-columns: auto auto; justify-items: end; }
-  .settings-menu span { grid-column: 1 / -1; }
+  .date-dialog { padding: 22px; border-radius: 15px; }
   .pi-stream { --index-gutter: 37px; --index-gap: 10px; }
   .digit-measure, .digit-run { font-size: 14px; letter-spacing: .018em; line-height: 1.9; }
   .pi-line { min-height: 31px; }

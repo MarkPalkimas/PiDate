@@ -29,8 +29,7 @@ export default function Home() {
   const [digitsPerRow, setDigitsPerRow] = useState(50);
   const [format, setFormat] = useState<DateFormat>('us');
   const [selectedDate, setSelectedDate] = useState(todayValue);
-  const [showDateFinder, setShowDateFinder] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [dialog, setDialog] = useState<'date' | 'settings' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -97,7 +96,7 @@ export default function Home() {
       chunksRef.current = initialChunks;
       setChunks(initialChunks);
       setMatch({ date: found.date, position: found.position });
-      setShowDateFinder(false);
+      setDialog(null);
     } catch (cause) {
       if (searchId === searchIdRef.current) setError(cause instanceof Error ? cause.message : 'Something went wrong.');
     } finally {
@@ -190,21 +189,36 @@ export default function Home() {
     <main className="pi-page">
       <header className="pi-title">The Number π</header>
       <nav className="pi-actions" aria-label="Pi controls">
-        <button onClick={() => { setShowDateFinder((open) => !open); setShowSettings(false); }}>Go to Date</button>
-        <button onClick={() => { setShowSettings((open) => !open); setShowDateFinder(false); }}>Settings</button>
+        <button onClick={() => setDialog('date')}>Go to Date</button>
+        <button onClick={() => setDialog('settings')}>Settings</button>
       </nav>
-      {showDateFinder && <form className="date-finder" onSubmit={submitDate}>
-        <input aria-label="Date to find" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-        <button type="submit">Find</button>
-        <button type="button" onClick={() => {
-          const today = todayValue();
-          setSelectedDate(today);
-          void findDate(dateDigits(today, format), dateDigits(today, 'iso'));
-        }}>Today</button>
-      </form>}
-      {showSettings && <div className="settings-menu" role="group" aria-label="Date search format">
-        <span>Date format</span>
-        {(Object.keys(DATE_FORMATS) as DateFormat[]).map((key) => <button key={key} className={format === key ? 'selected' : undefined} onClick={() => setFormat(key)}>{DATE_FORMATS[key].label}</button>)}
+      {dialog && <div className="dialog-backdrop" onMouseDown={() => setDialog(null)}>
+        <section className="date-dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title" onMouseDown={(event) => event.stopPropagation()}>
+          <div className="dialog-heading">
+            <h2 id="dialog-title">{dialog === 'date' ? 'Go to Date' : 'Date Settings'}</h2>
+            <button onClick={() => setDialog(null)} aria-label="Close">Close</button>
+          </div>
+          {dialog === 'date' ? <form onSubmit={submitDate}>
+            <label className="date-label" htmlFor="date-input">Choose a date</label>
+            <input id="date-input" className="date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
+            <p className="date-preview">Searching π for <strong>{selectedDate ? dateDigits(selectedDate, format) : '—'}</strong> · {DATE_FORMATS[format].label}</p>
+            <div className="dialog-actions">
+              <button type="button" onClick={() => setDialog('settings')}>Format</button>
+              <button type="button" onClick={() => {
+                const today = todayValue();
+                setSelectedDate(today);
+                void findDate(dateDigits(today, format), dateDigits(today, 'iso'));
+              }}>Today</button>
+              <button className="primary-action" type="submit">Find in π</button>
+            </div>
+          </form> : <div className="format-list" role="group" aria-label="Date search format">
+            <p>Choose how dates are written before searching.</p>
+            {(Object.keys(DATE_FORMATS) as DateFormat[]).map((key) => <button key={key} className={format === key ? 'selected' : undefined} onClick={() => setFormat(key)}>
+              <span>{DATE_FORMATS[key].label}</span><small>{key === 'us' ? 'American' : key === 'iso' ? 'Year first' : 'Day first'}</small>
+            </button>)}
+            <button className="return-to-date" onClick={() => setDialog('date')}>Back to date</button>
+          </div>}
+        </section>
       </div>}
 
       {loading ? (
