@@ -2,21 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: dark; --background: #050506; --surface: #111113; --digits: #f5f5f7; --index: #74747a; --accent: #9b6953; }
+:root { color-scheme: dark; --background: #09090a; --surface: #151516; --digits: rgb(255 255 255 / 91%); --index: rgb(255 255 255 / 34%); --accent: rgb(196 111 74 / 72%); }
 * { box-sizing: border-box; }
 html { min-width: 0; background: var(--background); }
 body { min-width: 0; margin: 0; overflow-x: hidden; color: var(--digits); background: var(--background); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; font-synthesis: none; text-rendering: optimizeLegibility; }
 button { font: inherit; }
 ::selection { color: #050506; background: #e9e9ec; }
 
-.pi-page { --edge-space: clamp(24px, 3.4vw, 52px); min-height: 100dvh; padding: 78px var(--edge-space) 56px; background: var(--background); }
-.pi-title { position: fixed; z-index: 2; top: 0; left: 0; display: grid; width: 100%; height: 54px; place-items: center; color: #f5f5f7; background: #050506; border-bottom: 1px solid #1e1e20; font-size: 13px; font-weight: 600; letter-spacing: -.01em; pointer-events: none; }
-.pi-actions { position: fixed; z-index: 4; top: 0; right: 0; display: flex; align-items: stretch; height: 54px; padding: 0 15px; border-bottom: 1px solid #1e1e20; border-left: 1px solid #1e1e20; background: #050506; }
-.pi-actions button { display: grid; width: 28px; place-items: center; border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; opacity: .48; transition: color 180ms ease, opacity 180ms ease; }
-.pi-actions button + button { margin-left: 5px; }
-.pi-actions button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.45; }
+.pi-page { --edge-space: clamp(22px, 3.3vw, 50px); min-height: 100dvh; padding: clamp(24px, 4.2vh, 46px) var(--edge-space) 56px; background: var(--background); }
+.pi-actions { position: fixed; z-index: 4; top: max(20px, env(safe-area-inset-top)); right: max(18px, env(safe-area-inset-right)); display: grid; gap: 9px; }
+.pi-actions button { display: grid; width: 37px; height: 37px; place-items: center; border: 0; border-radius: 9px; padding: 0; color: rgb(255 255 255 / 58%); background: rgb(255 255 255 / 0%); cursor: pointer; opacity: .58; transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease, transform 150ms ease; }
+.pi-actions button svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.45; }
+.pi-actions button:hover, .pi-actions button:focus-visible { color: rgb(255 255 255 / 91%); background: rgb(255 255 255 / 7%); opacity: 1; outline: none; }
+.pi-actions button:active { transform: scale(.94); background: rgb(255 255 255 / 10%); }
 .today-button { border: 0; padding: 0; color: #8e8e94; background: transparent; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; font-size: 11px; font-weight: 400; letter-spacing: -.01em; opacity: .5; transition: color 180ms ease, opacity 180ms ease; }
-.pi-actions button:hover, .pi-actions button:focus-visible, .today-button:hover, .today-button:focus-visible { color: #f5f5f7; opacity: 1; outline: none; }
+.today-button:hover, .today-button:focus-visible { color: #f5f5f7; opacity: 1; outline: none; }
 .dialog-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 24px; background: rgb(0 0 0 / 70%); animation: veil-in 220ms ease-out both; }
 .date-dialog { width: min(100%, 440px); padding: 28px; color: #f3f3f5; background: var(--surface); border: 1px solid #2a2a2e; border-radius: 20px; box-shadow: 0 30px 100px rgb(0 0 0 / 68%); animation: sheet-in 300ms cubic-bezier(.2, .8, .2, 1) both; }
 .dialog-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
@@ -43,13 +43,13 @@ button { font: inherit; }
 .format-list > button span { font: 400 14px "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; }
 .format-list > button small { color: #888890; font: 400 12px -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
 .return-to-date { margin-top: 16px; justify-self: start; }
-.pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; opacity: 0; transition: opacity 460ms cubic-bezier(.2, .8, .2, 1); }
-.pi-stream.is-visible { opacity: 1; }
-.digit-measure { position: absolute; visibility: hidden; contain: layout style; font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .038em; white-space: pre; }
+.pi-stream { --index-gutter: 68px; --index-gap: 18px; position: relative; width: 100%; min-width: 0; opacity: 0; transform: translateY(4px); transition: opacity 440ms cubic-bezier(.2, .8, .2, 1), transform 440ms cubic-bezier(.2, .8, .2, 1); }
+.pi-stream.is-visible { opacity: 1; transform: translateY(0); }
+.digit-measure { position: absolute; visibility: hidden; contain: layout style; font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SFMono-Regular", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace; letter-spacing: .03em; white-space: pre; }
 .pi-line { display: grid; grid-template-columns: var(--index-gutter) minmax(0, 1fr); column-gap: var(--index-gap); min-width: 0; min-height: 43px; }
-.digit-index { padding-top: .48em; color: var(--index); font: 400 10px/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .025em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
-.digit-run { display: block; min-width: 0; color: var(--digits); font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SF Mono", "SFMono-Regular", Menlo, Monaco, ui-monospace, monospace; letter-spacing: .034em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.today-digit { color: #fffaf8; background: var(--accent); border-radius: 2px; box-shadow: 0 0 0 1px rgb(255 245 239 / 9%); }
+.digit-index { padding-top: .48em; color: var(--index); font: 400 10px/1.68 "SFMono-Regular", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace; letter-spacing: .02em; text-align: right; font-variant-numeric: tabular-nums; user-select: none; }
+.digit-run { display: block; min-width: 0; color: var(--digits); font: 400 clamp(18px, 1.75vw, 25px)/1.68 "SFMono-Regular", "SF Mono", ui-monospace, Menlo, Monaco, Consolas, monospace; letter-spacing: .03em; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.today-digit { color: rgb(255 250 246 / 96%); background: var(--accent); border-radius: 4px; box-shadow: 0 0 0 1px rgb(255 244 237 / 8%); animation: highlight-discovery 620ms cubic-bezier(.2, .75, .3, 1) both; }
 .today-button { position: fixed; z-index: 3; right: var(--edge-space); bottom: 22px; }
 .stream-status { position: fixed; z-index: 3; bottom: 21px; left: 20px; color: #77767b; font-size: 11px; }
 .pi-loading { position: fixed; z-index: 0; inset: 0; min-height: 100dvh; overflow: hidden; color: #aaa9ad; background: var(--background); }
@@ -63,15 +63,16 @@ button { font: inherit; }
 @keyframes pi-drift { to { transform: translateY(-16.8em); } }
 @keyframes veil-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sheet-in { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes highlight-discovery { from { background-color: rgb(196 111 74 / 0%); box-shadow: 0 0 0 1px rgb(255 244 237 / 0%); } to { background-color: var(--accent); box-shadow: 0 0 0 1px rgb(255 244 237 / 8%); } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
 @media (max-width: 620px) {
-  .pi-page { --edge-space: 16px; padding-top: 68px; padding-bottom: 28px; }
-  .pi-title { height: 48px; font-size: 14px; }
-  .pi-actions { height: 48px; padding: 0 10px; }
+  .pi-page { --edge-space: 16px; padding-top: 24px; padding-bottom: 28px; }
+  .pi-actions { top: max(14px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); gap: 7px; }
+  .pi-actions button { width: 34px; height: 34px; border-radius: 8px; }
   .date-dialog { padding: 22px; border-radius: 15px; }
   .pi-stream { --index-gutter: 37px; --index-gap: 10px; }
   .digit-measure, .digit-run { font-size: 14px; letter-spacing: .018em; line-height: 1.9; }

@@ -39,6 +39,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [streamVisible, setStreamVisible] = useState(false);
+  const [highlightPulse, setHighlightPulse] = useState(0);
   const streamRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const chunksRef = useRef<PiChunk[]>([]);
@@ -145,6 +146,7 @@ export default function Home() {
     const target = document.querySelector<HTMLElement>('[data-date-match]');
     if (!target) return;
     window.scrollTo({ top: Math.max(0, window.scrollY + target.getBoundingClientRect().top - window.innerHeight / 2 + target.offsetHeight / 2), behavior });
+    setHighlightPulse((current) => current + 1);
   }, []);
 
   useEffect(() => {
@@ -210,7 +212,6 @@ export default function Home() {
 
   return (
     <main className="pi-page">
-      <header className="pi-title">The Number π</header>
       <nav className="pi-actions" aria-label="Pi controls">
         <button onClick={findToday} aria-label="Find today" title="Today"><TodayIcon /></button>
         <button onClick={() => setDialog('date')} aria-label="Go to date" title="Go to Date"><CalendarIcon /></button>
@@ -254,7 +255,7 @@ export default function Home() {
         <>
           <div ref={streamRef} className={`pi-stream${streamVisible ? ' is-visible' : ''}`} aria-label="Scrollable digits of pi">
             <span ref={measureRef} className="digit-measure" aria-hidden="true">0000000000</span>
-            <PiRows digits={digitStream} start={firstChunk.start} rowLength={digitsPerRow} date={match.date} datePosition={match.position} />
+            <PiRows digits={digitStream} start={firstChunk.start} rowLength={digitsPerRow} date={match.date} datePosition={match.position} highlightPulse={highlightPulse} />
           </div>
           <button className="today-button" onClick={() => centerMatch('smooth')}>Today</button>
           {loadingMore && <span className="stream-status" aria-live="polite">Loading π</span>}
@@ -285,7 +286,7 @@ function LoadingPiStream() {
   </div>;
 }
 
-function PiRows({ digits, start, rowLength, date, datePosition }: { digits: string; start: number; rowLength: number; date: string; datePosition: number }) {
+function PiRows({ digits, start, rowLength, date, datePosition, highlightPulse }: { digits: string; start: number; rowLength: number; date: string; datePosition: number; highlightPulse: number }) {
   const rows = Array.from({ length: Math.ceil(digits.length / rowLength) }, (_, index) => {
     const offset = index * rowLength;
     return { digits: digits.slice(offset, offset + rowLength), position: start + offset };
@@ -296,7 +297,7 @@ function PiRows({ digits, start, rowLength, date, datePosition }: { digits: stri
     <span className="digit-run">{row.digits.split('').map((digit, index) => {
       const position = row.position + index;
       const isMatch = position >= datePosition && position < datePosition + date.length;
-      return <span key={position} className={isMatch ? 'today-digit' : undefined} data-date-match={isMatch || undefined}>{digit}</span>;
+      return <span key={isMatch ? `${position}-${highlightPulse}` : position} className={isMatch ? 'today-digit' : undefined} data-date-match={isMatch || undefined}>{digit}</span>;
     })}</span>
   </div>)}</>;
 }
